@@ -45,8 +45,7 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 		//printf("thread %u Start Tstep%u\n", thread, TotalStep);
 		for (auto s = 0; s < StackPerThread; s++)
 		{
-			FiberLoad(s + s0, TotalStep);
-			
+			FiberLoad(s + s0, TotalStep);		
 		}
 		std::unique_lock<std::mutex> lock(this->mtx);
 		this->Finish++;
@@ -63,9 +62,24 @@ void TestPiece_t::FiberLoad(unsigned int Stack, unsigned int TotalStep)
 	LoadDistribute(Stack, LoadStep);
 	LoadRedistribute(Stack);
 	FiberDamage(Stack);
+	return;
 }
 void TestPiece_t::LoadDistribute(unsigned int Stack,unsigned int LoadStep)
 {
+	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * FiberLoadFactor / 100.0);
+	uint64_t TotalLoad = Load * this->Hexa->NodeCount[Stack];
+
+	double LoadRatio = double(TotalLoad) / double(this->Hexa->Capablity[Stack]);
+
+	/*if (LoadStep == 11)
+		printf("Stack %d:NodeLoad:%.2lf,AvgCap:%.2lf,Ratio:%.2lf,Nodes:%d\n", Stack, double(Load)*EM6, double(this->Hexa->Capablity[Stack])/double(this->Hexa->NodeCount[Stack]) * EM6, LoadRatio,this->Hexa->NodeCount[Stack]);
+		*/
+	if (LoadRatio > MaxLoadRatio)
+	{
+		printf("Overload at Stack %d at Step %d with AvgCap%.2lf,Load%.2lf\n", Stack,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Stack]), double(Load));
+		system("pause");
+	}
+
 	auto& Nodes = this->Hexa->Nodes[Stack];
 	for (auto Index = 1; Index < NodeMax; Index++)
 	{
@@ -73,7 +87,7 @@ void TestPiece_t::LoadDistribute(unsigned int Stack,unsigned int LoadStep)
 
 		if (Node->OverBoarder) continue;
 
-		Node->Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * FiberLoadFactor / 100.0); //Only for no yield!
+		Node->Load = Load; //Only for no yield!
 	}
 }
 void TestPiece_t::LoadRedistribute(unsigned int Stack)
@@ -174,7 +188,9 @@ void TestPiece_t::UpdateMaxStress()
 				auto& NodeU = this->Hexa->Nodes[StackU][Index];
 				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeU->SlidingStrength));
 
+				this->Hexa->Capablity[StackU] -= NodeU->MaxStress;
 				NodeU->MaxStress = std::min(NodeU->MaxStress, StressMax);
+				this->Hexa->Capablity[StackU] += NodeU->MaxStress;
 			}
 
 			for (int StackL = Stack + 1; StackL < StacksMax; StackL++)
@@ -182,7 +198,9 @@ void TestPiece_t::UpdateMaxStress()
 				auto& NodeL = this->Hexa->Nodes[StackL][Index];
 				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeL->SlidingStrength));
 
+				this->Hexa->Capablity[StackL] -= NodeL->MaxStress;
 				NodeL->MaxStress = std::min(NodeL->MaxStress, StressMax);
+				this->Hexa->Capablity[StackL] += NodeL->MaxStress;
 			}
 			DebugCounter[Stack]++;
 		}
@@ -259,11 +277,11 @@ TestPiece_t::TestPiece_t()
 		this->ToUpdate[s] = new TQueue_t<Node_t*>(NodeMax);
 	}
 
-
-
 	this->DebugCounter = new unsigned int[StacksMax];
 	for (unsigned int s = 0; s < StacksMax; s++)
 		DebugCounter[s] = 0;
+
+
 
 	this->Finish = 0;
 }

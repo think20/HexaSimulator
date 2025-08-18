@@ -94,6 +94,7 @@ public:
 	Node_t*** Nodes;
 	unsigned int* NodeCount;
 	int64_t* FiberBroken;
+	int64_t* Capablity;
 private:
 	void HexaGenerateP();
 	void HexasGenerate(unsigned int);

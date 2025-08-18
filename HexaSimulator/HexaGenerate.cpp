@@ -21,7 +21,7 @@ void Hexa_t::HexaGenerateP()
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
 
 	for (unsigned int s = 0; s < StacksMax; s++)
-		printf("%d\n", this->NodeCount[s]);
+		printf("Generated Stack %d with %d Nodes!\n", s, this->NodeCount[s]);
 	return;
 }
 void Hexa_t::HexasGenerate(unsigned int s0)
@@ -40,6 +40,7 @@ void Hexa_t::HexaGenerate(unsigned int Stack)
 	for (unsigned int Layer = 1; Layer <= LayerMax; Layer++)
 	{
 		GenerateLayer(Stack, Layer);
+		//printf("Stack:%d,Layer:%d,NodeCount:%d,Cap:%lf,AvgCap:%lf\n", Stack, Layer, NodeCount[Stack], double(Capablity[Stack]), double(Capablity[Stack] / NodeCount[Stack]));
 	}
 
 }
@@ -72,6 +73,8 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 		Node->Strength = int64_t(FiberStrength(Seed));
 		Node->MaxStress = Node->Strength;
 		Node->SlidingStrength = SlidingStrength0;
+
+		Capablity[Stack] += Node->MaxStress;
 
 		(NodeCount[Stack])++;
 		return;
@@ -132,8 +135,6 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 
 		NodeNow->Strength = int64_t(FiberStrength(Seed));
 		//printf("Strength:%u\n", NodeNow->Strength/1000'000);
-		NodeNow->MaxStress = NodeNow->Strength;
-		NodeNow->SlidingStrength = SlidingStrength0;
 
 		if (Node == 1) continue;
 
@@ -151,6 +152,11 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 			*/
 		if (NodeNow->r > SpecimenRadious - R1) NodeNow->OverBoarder = true;
 		else (NodeCount[Stack])++;
+
+		NodeNow->MaxStress = NodeNow->Strength;
+		NodeNow->SlidingStrength = SlidingStrength0;
+		if (!NodeNow->OverBoarder)
+			Capablity[Stack] += NodeNow->MaxStress;
 
 		NodeNow->FiberHealth = FiberHealthMax;
 	}
@@ -213,6 +219,10 @@ Hexa_t::Hexa_t()
 	this->Finish = 0;
 
 	this->FiberBroken = new int64_t[NodeMax];
+
+	this->Capablity = new int64_t[StacksMax];
+	for (unsigned int s = 0; s < StacksMax; s++)
+		Capablity[s] = 0;
 
 	this->HexaGenerateP(); //RAII
 }
