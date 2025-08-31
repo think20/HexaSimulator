@@ -21,7 +21,7 @@ void Hexa_t::HexaGenerateP()
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
 
 	for (unsigned int s = 0; s < StacksMax; s++)
-		printf("Generated Stack %d with %d Nodes!\n", s, this->NodeCount[s]);
+		printf("Generated Slice %d with %d Nodes!\n", s, this->NodeCount[s]);
 	return;
 }
 void Hexa_t::HexasGenerate(unsigned int s0)
@@ -35,74 +35,78 @@ void Hexa_t::HexasGenerate(unsigned int s0)
 	this->Finish++;
 	cv.notify_one();
 }
-void Hexa_t::HexaGenerate(unsigned int Stack)
+void Hexa_t::HexaGenerate(unsigned int Slice)
 {
 	for (unsigned int Layer = 1; Layer <= LayerMax; Layer++)
 	{
-		GenerateLayer(Stack, Layer);
-		//printf("Stack:%d,Layer:%d,NodeCount:%d,Cap:%lf,AvgCap:%lf\n", Stack, Layer, NodeCount[Stack], double(Capablity[Stack]), double(Capablity[Stack] / NodeCount[Stack]));
+		GenerateLayer(Slice, Layer);
+		InitStrength(Slice, Layer);
+		//printf("Slice:%d,Layer:%d,NodeCount:%d,Cap:%lf,AvgCap:%lf\n", Slice, Layer, NodeCount[Slice], double(Capablity[Slice]), double(Capablity[Slice] / NodeCount[Slice]));
 	}
 
 }
-void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
+void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 {
 	//printf("Layer:%u\n", Layer);
 	//auto TimeSeed = std::chrono::high_resolution_clock::now();
 	//std::default_random_engine Seed(TimeSeed);
-	std::random_device Seed;
-	std::weibull_distribution<double> FiberStrength(mf, SigmaL);
 
-	auto Nodes = this->Nodes[Stack];
+	auto Nodes = this->Nodes[Slice];
 	unsigned int StartNode = Convert31(Layer, 1, 1);
+	unsigned int EndNode = Convert31(Layer, 6, Layer - 1);
+	//unsigned int NodeCount = EndNode - StartNode + 1;
+
 	if (Layer == 1)
 	{
 		Nodes[1] = new Node_t;
 
 		auto& Node = Nodes[1];
-		
-		Node->Stack = Stack;
+
+		Node->Slice = Slice;
 		Node->Layer = 1;
 		Node->Order = 1;
 		Node->Index = Convert21(Node->Layer, Node->Order);
 		Node->r = 0;
 		Node->x = 0;
 		Node->y = 0;
-		Node->OffsetAngle = 0;
-		Node->OffsetDamageFactor = 0;
-		Node->FiberHealth = FiberHealthMax;
-		Node->Strength = int64_t(FiberStrength(Seed));
-		Node->MaxStress = Node->Strength;
-		Node->SlidingStrength = SlidingStrength0;
-
-		Capablity[Stack] += Node->MaxStress;
-
-		(NodeCount[Stack])++;
+		
+		(NodeCount[Slice])++;
 		return;
 	}
-	StartNode = Convert31(Layer,1,1);
-
-	unsigned int EndNode = Convert31(Layer, 6, Layer - 1);
-	//unsigned int NodeCount = EndNode - StartNode + 1;
-
+	
 	for (unsigned int Order = 1; Order <= 6 * (Layer-1); Order++)
 	{
 		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
 		NodeNow = new Node_t;
 
-		NodeNow->Stack = Stack;
+		NodeNow->Slice = Slice;
 
 		NodeNow->Layer = Layer;
 		NodeNow->Order = Order;
 		NodeNow->Index = Convert21(Layer, Order);
 
-		
 		unsigned int Edge, Node;
 		Convert23(Layer, Order, Edge, Node);
 
-		
 		if (Node == 1)
 		{
 			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node));
+		}
+		else
+		{
+			AddNeighbor(Nodes, Convert21(Layer, Order), Convert21(Layer, Order - 1));
+			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node - 1));
+			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node));
+		}
+
+	}
+	for (unsigned int Order = 1; Order <= 6 * (Layer - 1); Order++)
+	{
+		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
+		unsigned int Edge, Node;
+		Convert23(Layer, Order, Edge, Node);
+		if (Node == 1)
+		{
 
 			NodeNow->r = 2.0 * (1.0 * Layer - 1.0) * R1;
 			NodeNow->x = 2.0 * (1.0 * Layer - 1.0) * R1 * Orient[Edge - 1][0];
@@ -116,16 +120,10 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 
 			NodeNow->FiberHealth = FiberHealthMax;*/
 			if (NodeNow->r > SpecimenRadious - R1) NodeNow->OverBoarder = true;
-			else (NodeCount[Stack])++;
+			else (NodeCount[Slice])++;
 		}
-		else
-		{
-			AddNeighbor(Nodes, Convert21(Layer, Order), Convert21(Layer, Order - 1));
-			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node - 1));
-			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node));
-		}
-
 	}
+
 	for (unsigned int Order = 1; Order <= 6 * (Layer - 1); Order++)
 	{
 		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
@@ -133,10 +131,7 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 		unsigned int Edge, Node;
 		Convert23(Layer, Order, Edge, Node);
 
-		NodeNow->Strength = int64_t(FiberStrength(Seed));
-		//printf("Strength:%u\n", NodeNow->Strength/1000'000);
-
-		if (Node == 1) continue;
+		if (Node == 1) continue; //Last node is the first node of next edge
 
 		auto& NodeStart = Nodes[Convert31(Layer, Edge, 1)];
 		auto& NodeEnd = Nodes[Convert31(Layer, Edge % 6 + 1, 1)];
@@ -151,16 +146,47 @@ void Hexa_t::GenerateLayer(unsigned int Stack, unsigned int Layer)
 			NodeNow->OffsetDamageFactor = ((NodeNow->OffsetAngle - ThetaThresh) * OffsetFactor) / 100 + 1;
 			*/
 		if (NodeNow->r > SpecimenRadious - R1) NodeNow->OverBoarder = true;
-		else (NodeCount[Stack])++;
+		else (NodeCount[Slice])++;
+	}
+}
 
+void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
+{
+	std::random_device Seed;
+	std::weibull_distribution<double> FiberStrength(mf, SigmaL);
+
+	auto Nodes = this->Nodes[Slice];
+
+	if (Layer == 1)
+	{
+		auto& Node = Nodes[1];
+		Node->OffsetAngle = 0;
+		Node->OffsetDamageFactor = 0;
+		Node->Strength = int64_t(FiberStrength(Seed));
+		Node->MaxStress = Node->Strength;
+		Node->SlidingStrength = SlidingStrength0;
+
+		Capablity[Slice] += Node->MaxStress;
+
+		return;
+	}
+	unsigned int StartNode = Convert31(Layer, 1, 1);
+	unsigned int EndNode = Convert31(Layer, 6, Layer - 1);
+
+	for (unsigned int Order = 1; Order <= 6 * (Layer - 1); Order++)
+	{
+		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
+
+		unsigned int Edge, Node;
+		Convert23(Layer, Order, Edge, Node);
+
+		NodeNow->Strength = int64_t(FiberStrength(Seed));
+		//printf("Strength:%u\n", NodeNow->Strength/1000'000);
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;
 		if (!NodeNow->OverBoarder)
-			Capablity[Stack] += NodeNow->MaxStress;
-
-		NodeNow->FiberHealth = FiberHealthMax;
+			Capablity[Slice] += NodeNow->MaxStress;
 	}
-
 }
 
 void Hexa_t::AddNeighbor(Node_t** Nodes, unsigned int Index1, unsigned int Index2)
@@ -172,7 +198,6 @@ void Hexa_t::AddNeighbor(Node_t** Nodes, unsigned int Index1, unsigned int Index
 
 	Node1->Neighbors[Node1->NeighborCount++] = Node2;
 	Node2->Neighbors[Node2->NeighborCount++] = Node1;
-
 
 }
 void Hexa_t::Convert23(const unsigned int& Layer, const unsigned int& Order, unsigned int& Edge, unsigned int& Node)

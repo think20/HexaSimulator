@@ -56,31 +56,31 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 	}
 
 }
-void TestPiece_t::FiberLoad(unsigned int Stack, unsigned int TotalStep)
+void TestPiece_t::FiberLoad(unsigned int Slice, unsigned int TotalStep)
 {
 	unsigned int LoadStep = TotalStep % LoadStepMax;
-	LoadDistribute(Stack, LoadStep);
-	LoadRedistribute(Stack);
-	FiberDamage(Stack);
+	LoadDistribute(Slice, LoadStep);
+	LoadRedistribute(Slice);
+	FiberDamage(Slice);
 	return;
 }
-void TestPiece_t::LoadDistribute(unsigned int Stack,unsigned int LoadStep)
+void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep)
 {
 	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * FiberLoadFactor / 100.0);
-	uint64_t TotalLoad = Load * this->Hexa->NodeCount[Stack];
+	uint64_t TotalLoad = Load * this->Hexa->NodeCount[Slice];
 
-	double LoadRatio = double(TotalLoad) / double(this->Hexa->Capablity[Stack]);
+	double LoadRatio = double(TotalLoad) / double(this->Hexa->Capablity[Slice]);
 
 	/*if (LoadStep == 11)
-		printf("Stack %d:NodeLoad:%.2lf,AvgCap:%.2lf,Ratio:%.2lf,Nodes:%d\n", Stack, double(Load)*EM6, double(this->Hexa->Capablity[Stack])/double(this->Hexa->NodeCount[Stack]) * EM6, LoadRatio,this->Hexa->NodeCount[Stack]);
+		printf("Slice %d:NodeLoad:%.2lf,AvgCap:%.2lf,Ratio:%.2lf,Nodes:%d\n", Slice, double(Load)*EM6, double(this->Hexa->Capablity[Slice])/double(this->Hexa->NodeCount[Slice]) * EM6, LoadRatio,this->Hexa->NodeCount[Slice]);
 		*/
 	if (LoadRatio > MaxLoadRatio)
 	{
-		printf("Overload at Stack %d at Step %d with AvgCap%.2lf,Load%.2lf\n", Stack,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Stack]), double(Load));
+		printf("Overload at Slice %d at Step %d with AvgCap%.2lf,Load%.2lf\n", Slice,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Slice]), double(Load));
 		system("pause");
 	}
 
-	auto& Nodes = this->Hexa->Nodes[Stack];
+	auto& Nodes = this->Hexa->Nodes[Slice];
 	for (auto Index = 1; Index < NodeMax; Index++)
 	{
 		auto& Node = Nodes[Index];
@@ -90,9 +90,9 @@ void TestPiece_t::LoadDistribute(unsigned int Stack,unsigned int LoadStep)
 		Node->Load = Load; //Only for no yield!
 	}
 }
-void TestPiece_t::LoadRedistribute(unsigned int Stack)
+void TestPiece_t::LoadRedistribute(unsigned int Slice)
 {
-	auto& Nodes = this->Hexa->Nodes[Stack];
+	auto& Nodes = this->Hexa->Nodes[Slice];
 
 	for (auto Index = 1; Index < NodeMax; Index++)
 	{
@@ -102,40 +102,40 @@ void TestPiece_t::LoadRedistribute(unsigned int Stack)
 
 		if (Node->Load > Node->MaxStress)
 		{
-			OverLoadNodes[Stack]->Push(Node);
-			//printf("Debug Overload:(%d,%d),%d>%d\n", Stack, Index, Node->Load, Node->MaxStress);
+			OverLoadNodes[Slice]->Push(Node);
+			//printf("Debug Overload:(%d,%d),%d>%d\n", Slice, Index, Node->Load, Node->MaxStress);
 		}
 	}
 	/*std::vector<int>::iterator iter;
 	iter->a;*/
-	while (!OverLoadNodes[Stack]->Empty())
+	while (!OverLoadNodes[Slice]->Empty())
 	{
-		auto* Node = OverLoadNodes[Stack]->Front();
-		OverLoadNodes[Stack]->Pop();
+		auto* Node = OverLoadNodes[Slice]->Front();
+		OverLoadNodes[Slice]->Pop();
 
-		//printf("! %d:%d\n", Node->Stack, Node->Index);
+		//printf("! %d:%d\n", Node->Slice, Node->Index);
 
 		LLSNode_t StartNode;
 		StartNode.Node = Node;
 		StartNode.LLSIndex = 0;
-		Visited[Stack][Node->Index] = Color[Stack]++;
+		Visited[Slice][Node->Index] = Color[Slice]++;
 
-		BFSSeq[Stack]->Push(StartNode);
-		FindNeighbors(Stack);
+		BFSSeq[Slice]->Push(StartNode);
+		FindNeighbors(Slice);
 
 		double LLSShare = 0;
 		
-		//printf("%d\n", AnsSeq[Stack]->Empty());
+		//printf("%d\n", AnsSeq[Slice]->Empty());
 
-		for (auto LLSNeighborNode = AnsSeq[Stack]->Begin(); LLSNeighborNode != AnsSeq[Stack]->End(); LLSNeighborNode++)
+		for (auto LLSNeighborNode = AnsSeq[Slice]->Begin(); LLSNeighborNode != AnsSeq[Slice]->End(); LLSNeighborNode++)
 		{
-			//auto debugbg = AnsSeq[Stack]->Begin();
-			//auto debuged = AnsSeq[Stack]->End();
+			//auto debugbg = AnsSeq[Slice]->Begin();
+			//auto debuged = AnsSeq[Slice]->End();
 			LLSShare += LLSFactor[LLSNeighborNode->LLSIndex];
-			//printf("Stack:%d,Now:%d,End:%d,Size:%u\n", Stack, LLSNeighborNode.DebugGetIndex(), AnsSeq[Stack]->End().DebugGetIndex(),AnsSeq[Stack]->DebugGetSize());
+			//printf("Slice:%d,Now:%d,End:%d,Size:%u\n", Slice, LLSNeighborNode.DebugGetIndex(), AnsSeq[Slice]->End().DebugGetIndex(),AnsSeq[Slice]->DebugGetSize());
 		}
 		//printf("yee\n");
-		for (auto LLSNeighborNode=AnsSeq[Stack]->Begin(); LLSNeighborNode != AnsSeq[Stack]->End(); LLSNeighborNode++)
+		for (auto LLSNeighborNode=AnsSeq[Slice]->Begin(); LLSNeighborNode != AnsSeq[Slice]->End(); LLSNeighborNode++)
 		{
 			auto NeighborNode = LLSNeighborNode->Node;
 			auto LLSI = LLSNeighborNode->LLSIndex;
@@ -144,19 +144,19 @@ void TestPiece_t::LoadRedistribute(unsigned int Stack)
 
 			if (NeighborNode->Load > NeighborNode->MaxStress)
 			{
-				OverLoadNodes[Stack]->Push(NeighborNode);
-				//printf("Stack:%u Neighbor:%u overloaded by Node:%u\n", Stack, Node->Index, NeighborNode->Index);
+				OverLoadNodes[Slice]->Push(NeighborNode);
+				//printf("Slice:%u Neighbor:%u overloaded by Node:%u\n", Slice, Node->Index, NeighborNode->Index);
 			}
 		}
 
 		
 		Node->Load = Node->MaxStress;
-		AnsSeq[Stack]->Clear();
+		AnsSeq[Slice]->Clear();
 	}
 }
-void TestPiece_t::FiberDamage(unsigned int Stack)
+void TestPiece_t::FiberDamage(unsigned int Slice)
 {
-	auto& Nodes = this->Hexa->Nodes[Stack];
+	auto& Nodes = this->Hexa->Nodes[Slice];
 	for (auto Index = 1; Index < NodeMax; Index++)
 	{
 		auto& Node = Nodes[Index];
@@ -166,7 +166,7 @@ void TestPiece_t::FiberDamage(unsigned int Stack)
 		if (Node->Load == Node->Strength && (!Node->Broken))
 		{
 			Node->Broken = true;
-			ToUpdate[Stack]->Push(Node);
+			ToUpdate[Slice]->Push(Node);
 		}
 		
 	}
@@ -174,16 +174,16 @@ void TestPiece_t::FiberDamage(unsigned int Stack)
 }
 void TestPiece_t::UpdateMaxStress()
 {
-	for (unsigned int Stack = 0; Stack < StacksMax; Stack++)
+	for (unsigned int Slice = 0; Slice < StacksMax; Slice++)
 	{
-		while (!ToUpdate[Stack]->Empty())
+		while (!ToUpdate[Slice]->Empty())
 		{
-			auto Node = ToUpdate[Stack]->Front();
-			ToUpdate[Stack]->Pop();
+			auto Node = ToUpdate[Slice]->Front();
+			ToUpdate[Slice]->Pop();
 
 			auto& Index = Node->Index;
 			int64_t StressMax = 0;
-			for (int StackU = Stack - 1; StackU >= 0; StackU--)
+			for (int StackU = Slice - 1; StackU >= 0; StackU--)
 			{
 				auto& NodeU = this->Hexa->Nodes[StackU][Index];
 				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeU->SlidingStrength));
@@ -193,7 +193,7 @@ void TestPiece_t::UpdateMaxStress()
 				this->Hexa->Capablity[StackU] += NodeU->MaxStress;
 			}
 
-			for (int StackL = Stack + 1; StackL < StacksMax; StackL++)
+			for (int StackL = Slice + 1; StackL < StacksMax; StackL++)
 			{
 				auto& NodeL = this->Hexa->Nodes[StackL][Index];
 				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeL->SlidingStrength));
@@ -202,17 +202,17 @@ void TestPiece_t::UpdateMaxStress()
 				NodeL->MaxStress = std::min(NodeL->MaxStress, StressMax);
 				this->Hexa->Capablity[StackL] += NodeL->MaxStress;
 			}
-			DebugCounter[Stack]++;
+			DebugCounter[Slice]++;
 		}
-		//printf("%d:%d\n",Stack,DebugCounter[Stack]);
+		//printf("Slice:%d Broken:%d\n",Slice,DebugCounter[Slice]);
 	}
 	//printf("=================================\n");
 }
-void TestPiece_t::FindNeighbors(unsigned int Stack)
+void TestPiece_t::FindNeighbors(unsigned int Slice)
 {
-	auto Node = BFSSeq[Stack]->Front().Node;
-	auto LLSIndex = BFSSeq[Stack]->Front().LLSIndex;
-	BFSSeq[Stack]->Pop();
+	auto Node = BFSSeq[Slice]->Front().Node;
+	auto LLSIndex = BFSSeq[Slice]->Front().LLSIndex;
+	BFSSeq[Slice]->Pop();
 
 	if (LLSIndex == LLSIMax) return;
 
@@ -223,7 +223,7 @@ void TestPiece_t::FindNeighbors(unsigned int Stack)
 		auto Discard = [&] {
 			if (Neighbor->OverBoarder) return true;
 			if (Neighbor->Load >= Neighbor->MaxStress) return true;
-			if (Visited[Neighbor->Stack][Neighbor->Index] == Visited[Node->Stack][Node->Index]) return true;
+			if (Visited[Neighbor->Slice][Neighbor->Index] == Visited[Node->Slice][Node->Index]) return true;
 			return false;
 
 			};
@@ -234,14 +234,14 @@ void TestPiece_t::FindNeighbors(unsigned int Stack)
 		LLSNeighborNode.Node = Neighbor;
 		LLSNeighborNode.LLSIndex = LLSIndex + 1;
 
-		BFSSeq[Stack]->Push(LLSNeighborNode);
-		AnsSeq[Stack]->Push(LLSNeighborNode);
+		BFSSeq[Slice]->Push(LLSNeighborNode);
+		AnsSeq[Slice]->Push(LLSNeighborNode);
 
-		Visited[Neighbor->Stack][Neighbor->Index] = Visited[Node->Stack][Node->Index];
+		Visited[Neighbor->Slice][Neighbor->Index] = Visited[Node->Slice][Node->Index];
 
 	}
 	
-	if (!BFSSeq[Stack]->Empty()) FindNeighbors(Stack);
+	if (!BFSSeq[Slice]->Empty()) FindNeighbors(Slice);
 
 }
 TestPiece_t::TestPiece_t()

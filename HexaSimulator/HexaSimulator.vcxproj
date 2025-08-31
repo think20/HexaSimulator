@@ -147,13 +147,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Crack.h" />
     <ClInclude Include="Hexa.h" />
     <ClInclude Include="Load.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TDataStructure.h" />
     <ClInclude Include="Visualizer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Crack.cpp" />
     <ClCompile Include="HexaGenerate.cpp" />
     <ClCompile Include="Load.cpp" />
     <ClCompile Include="main.cpp" />
