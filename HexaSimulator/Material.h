@@ -24,7 +24,7 @@ constexpr double Vm = 1 - Vf;
 constexpr double Ef = 434.3 * E9;
 constexpr double Em = 88.3 * E9;
 
-//dadN(mm) = Cm*(DeltaK(Mpa))^Mm
+//dadN(m) = Cm*(DeltaK(Mpa))^Mm
 constexpr double Cm = 3 * EM9 * 0.01; //3*10^-11
 constexpr double Mm = 3.1256;
 

@@ -3,12 +3,19 @@
 #include "Crack.h"
 #include <math.h>
 
-
-double Crack_t::dadN(double Sigma, double a)
+double const& Crack_t::UpdateCrack(double Sigma)
 {
-	double R = 1500 * EM6;
-	double Yb = sqrtl(1.0 / cosl(pi * a / (2 * R)));
-	double deltaKb = Yb * Sigma * sqrtl(pi * a) * (1 - 0.1) * EM6;// MPa/m^1/2
-	double dadn = Cm * powl(deltaKb, Mm); // m
-	return dadn;
+	Yb = sqrtl(1.0 / cosl(pi * a / (2 * Req)));
+
+	double Sigmab0 = Sigmab;
+	Sigmab = Yb * Sigma;
+
+	if (not(Sigmab > Sigmab0)) return a;
+
+	double deltaKb = (Sigmab-Sigmab0) * sqrtl(pi * a) * EM6;// MPa/m^1/2
+	double dadn = Cm * powl(deltaKb, Mm);
+	
+	a += dadn;
+
+	return a;
 }

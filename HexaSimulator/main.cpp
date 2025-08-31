@@ -34,6 +34,24 @@ int main()
 			printf("%d:%lf\n", c, a0*E6);
 	}*/
 
+	auto Crack = new Crack_t(30 * EM6, 1500 * EM6);
+	for (unsigned int TotalStep = 0; TotalStep < 75'0000; TotalStep++)
+	{
+		unsigned int LoadStep = TotalStep % LoadStepMax;
+		double sigma = double(LoadPercent[LoadStep])/100.0 * MaxLoad * MatrixLoadFactor;
+		double Len = Crack->UpdateCrack(sigma);
+
+		if (TotalStep % 1000 == 0)
+		{
+			printf("TotCyc:%u,Cyc:%u,CrackLen:%.2lf um,Sigma:%.2lfMPa,Sigmab:%.2lfMpa\n", TotalStep, TotalStep / LoadStepMax, Len * E6,sigma*EM6,Crack->Sigmab*EM6);
+		}
+		if (Len > 1400 * EM6)
+		{
+			printf("TotCyc:%u,Cyc:%u,CrackLen:%.2lf um\n", TotalStep, TotalStep / LoadStepMax, Len * E6);
+			break;
+		}
+	}
+
 	//int C=SavePic(Nodes);
 
 	//int C = ShowTheta(Nodes);
