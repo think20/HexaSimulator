@@ -1,8 +1,15 @@
 #pragma once
-
+//0.45Vf = 361(361) fibers = F1
 //0.45Vf = 361(365) fibers = F2
 //0.43Vf = 337(338) fibers = F3
 //For each Fiber, Vf is actual, for Specimen, Vf>Vf_Actual. Rim Filled by matrix without fiber.
+
+#ifdef FiberF1
+constexpr double Vf = 0.45;
+constexpr double OffsetK = 0.2529;
+constexpr double OffsetB = -0.6441;
+#define SiCf_Ti6242HT true
+#endif
 
 #ifdef FiberF2
 constexpr double Vf = 0.45;

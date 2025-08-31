@@ -4,7 +4,7 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
-constexpr double MaxLoad = 1250 * E6;
+constexpr double MaxLoad = 1000 * E6;
 
 constexpr unsigned int LoadStepMax = 71;
 constexpr unsigned int LoadPercent[LoadStepMax] = { 0,68,51,72,44,65,44,72,48,68,26,99,52,100,52,83,49,99,51,75,49,56,49,62,48,100,79,86,80,90,76,80,74,95,83,99,94,98,95,100,65,70,66,77,53,58,55,96,92,95,76,83,72,78,73,81,56,68,57,70,46,72,16,93,33,41,30,36,22,30,0 };

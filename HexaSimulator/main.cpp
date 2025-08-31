@@ -35,7 +35,7 @@ int main()
 	}*/
 
 	auto Crack = new Crack_t(30 * EM6, 1500 * EM6);
-	for (unsigned int TotalStep = 0; TotalStep < 75'0000; TotalStep++)
+	for (unsigned int TotalStep = 0; TotalStep < 1000'0000; TotalStep++)
 	{
 		unsigned int LoadStep = TotalStep % LoadStepMax;
 		double sigma = double(LoadPercent[LoadStep])/100.0 * MaxLoad * MatrixLoadFactor;

@@ -5,7 +5,7 @@
 
 double const& Crack_t::UpdateCrack(double Sigma)
 {
-	Yb = sqrtl(1.0 / cosl(pi * a / (2 * Req)));
+	Yb = sqrtl(1.0 / cosl(pi * a * a / (2 * Req * Req)));
 
 	double Sigmab0 = Sigmab;
 	Sigmab = Yb * Sigma;
