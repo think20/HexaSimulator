@@ -20,7 +20,7 @@ void Hexa_t::HexaGenerateP()
 
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
 
-	for (unsigned int s = 0; s < StacksMax; s++)
+	for (unsigned int s = 0; s < SlicesMax; s++)
 		printf("Generated Slice %d with %d Nodes!\n", s, this->NodeCount[s]);
 	return;
 }
@@ -187,6 +187,12 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		if (!NodeNow->OverBoarder)
 			Capablity[Slice] += NodeNow->MaxStress;
 	}
+	if (Slice == 0)
+	{
+		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
+		this->Crack[Slice] = new Crack_t(InitCrackRadious, Req);
+	}
+		
 }
 
 void Hexa_t::AddNeighbor(Node_t** Nodes, unsigned int Index1, unsigned int Index2)
@@ -230,24 +236,28 @@ Node_t::Node_t()
 }
 Hexa_t::Hexa_t()
 {
-	this->Nodes = new Node_t * *[StacksMax];
-	this->NodeCount = new unsigned int[StacksMax];
+	this->Nodes = new Node_t * *[SlicesMax];
+	this->NodeCount = new unsigned int[SlicesMax];
 
-	for (unsigned int s = 0; s < StacksMax; s++)
+	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		Nodes[s] = new Node_t * [NodeMax];
 		//std::cout << s << std::endl;
 	}
 
-	for (unsigned int s = 0; s < StacksMax; s++)
+	for (unsigned int s = 0; s < SlicesMax; s++)
 		NodeCount[s] = 0;
 	this->Finish = 0;
 
 	this->FiberBroken = new int64_t[NodeMax];
 
-	this->Capablity = new int64_t[StacksMax];
-	for (unsigned int s = 0; s < StacksMax; s++)
+	this->Capablity = new int64_t[SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
 		Capablity[s] = 0;
+
+	this->Crack = new Crack_t* [SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
+		Crack[s] = nullptr;
 
 	this->HexaGenerateP(); //RAII
 }

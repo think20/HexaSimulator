@@ -4,13 +4,35 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
+#ifdef FiberF1
 constexpr double MaxLoad = 1000 * E6;
+#define Spectra71
+#endif
 
+#ifdef FiberF2
+constexpr double MaxLoad = 1250 * E6;
+#define Spectra71
+#endif
+
+#ifdef FiberF3
+constexpr double MaxLoad = 1250 * E6;
+#define Spectra71
+#endif
+
+#ifdef FiberT1
+constexpr double MaxLoad = 2000 * E6;
+#define IncLoad11
+#endif
+
+#ifdef Spectra71
 constexpr unsigned int LoadStepMax = 71;
 constexpr unsigned int LoadPercent[LoadStepMax] = { 0,68,51,72,44,65,44,72,48,68,26,99,52,100,52,83,49,99,51,75,49,56,49,62,48,100,79,86,80,90,76,80,74,95,83,99,94,98,95,100,65,70,66,77,53,58,55,96,92,95,76,83,72,78,73,81,56,68,57,70,46,72,16,93,33,41,30,36,22,30,0 };
+#endif
 
-//constexpr unsigned int LoadStepMax = 11;
-//constexpr unsigned int LoadPercent[LoadStepMax] = { 0,10,20,30,40,50,60,70,80,90,100 };
+#ifdef IncLoad11
+constexpr unsigned int LoadStepMax = 11;
+constexpr unsigned int LoadPercent[LoadStepMax] = { 0,10,20,30,40,50,60,70,80,90,100 };
+#endif
 
 constexpr unsigned int LLSIMax = 3;
 constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2,1 };
@@ -40,7 +62,7 @@ private:
 	void FibersLoad(unsigned int, unsigned int);
 	void FiberLoad(unsigned int, unsigned int);
 
-	void LoadDistribute(unsigned int,unsigned int);
+	void LoadDistribute(unsigned int,unsigned int,unsigned int);
 	void LoadRedistribute(unsigned int);
 	void FiberDamage(unsigned int);
 

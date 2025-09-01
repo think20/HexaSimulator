@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "Material.h"
+#include "Crack.h"
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -11,8 +12,8 @@ constexpr double SpecimenRadious = 1500 * EM6;
 
 constexpr unsigned int NeighberMax = 6;
 constexpr unsigned int LayerMax = 15;
-constexpr unsigned int StacksMax = 16;
-constexpr unsigned int StackPerThread = StacksMax / ThreadMax;
+constexpr unsigned int SlicesMax = 16;
+constexpr unsigned int StackPerThread = SlicesMax / ThreadMax;
 
 constexpr unsigned int NodeMax = ((2 - 1) + (LayerMax - 1)) * (LayerMax - 1) / 2 * 6 + 1;
 
@@ -62,6 +63,7 @@ public:
 	unsigned int* NodeCount;
 	int64_t* FiberBroken;
 	int64_t* Capablity;
+	Crack_t** Crack;
 
 	class StackwiseIterator_t
 	{

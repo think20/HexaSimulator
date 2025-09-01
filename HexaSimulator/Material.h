@@ -25,6 +25,13 @@ constexpr double OffsetB = 2.2076;
 #define SiCf_Ti6242HT true
 #endif
 
+#ifdef FiberT1
+constexpr double Vf = 0.43;
+constexpr double OffsetK = 0.3363;
+constexpr double OffsetB = 2.2076;
+#define SiCf_Ti6242HT true
+#endif
+
 constexpr double Vm = 1 - Vf;
 
 #ifdef SiCf_Ti6242HT
@@ -41,6 +48,8 @@ constexpr double HeatResidualStress = 100 * E6;//to be looked up
 constexpr double Sigma0 = 3160 * E6;//3160MPa
 constexpr double mf = 14.89;
 constexpr double Lg = 25.4 * EM3; //25.4mm Gauge Length
+
+constexpr double InitCrackRadious = 55 * EM6;
 
 #endif
 

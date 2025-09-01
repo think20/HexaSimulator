@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Load.h"
+#include "Crack.h"
 
 #include <cmath>
 #include <ctime>
@@ -59,14 +60,36 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 void TestPiece_t::FiberLoad(unsigned int Slice, unsigned int TotalStep)
 {
 	unsigned int LoadStep = TotalStep % LoadStepMax;
-	LoadDistribute(Slice, LoadStep);
+	unsigned int LoadCycle = TotalStep / LoadStepMax;
+	LoadDistribute(Slice, LoadStep, LoadCycle);
 	LoadRedistribute(Slice);
 	FiberDamage(Slice);
 	return;
 }
-void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep)
+void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep,unsigned int LoadCycle)
 {
-	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * FiberLoadFactor / 100.0);
+	double SliceFiberLoadFactor = FiberLoadFactor;
+
+	auto& Crack = this->Hexa->Crack[Slice];
+	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
+
+	if (Crack != nullptr)
+	{
+		double Cracklen = Crack->UpdateCrack(double(CompositeLoad));
+		SliceFiberLoadFactor == Crack->Yb * Ef / Em;
+		if (Cracklen > Crack->MaxCrackLen)
+		{
+			printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice, LoadCycle, Cracklen*E3);
+			for (unsigned int s = 0; s < SlicesMax; s++)
+				printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
+			printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n",Crack->Yb,SliceFiberLoadFactor );
+			system("pause");
+		}
+
+
+	}
+
+	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
 	uint64_t TotalLoad = Load * this->Hexa->NodeCount[Slice];
 
 	double LoadRatio = double(TotalLoad) / double(this->Hexa->Capablity[Slice]);
@@ -76,7 +99,9 @@ void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep)
 		*/
 	if (LoadRatio > MaxLoadRatio)
 	{
-		printf("Overload at Slice %d at Step %d with AvgCap%.2lf,Load%.2lf\n", Slice,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Slice]), double(Load));
+		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf\n", Slice,LoadCycle,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Slice]), double(Load));
+		for (unsigned int s = 0; s < SlicesMax; s++)
+			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		system("pause");
 	}
 
@@ -174,7 +199,7 @@ void TestPiece_t::FiberDamage(unsigned int Slice)
 }
 void TestPiece_t::UpdateMaxStress()
 {
-	for (unsigned int Slice = 0; Slice < StacksMax; Slice++)
+	for (unsigned int Slice = 0; Slice < SlicesMax; Slice++)
 	{
 		while (!ToUpdate[Slice]->Empty())
 		{
@@ -193,7 +218,7 @@ void TestPiece_t::UpdateMaxStress()
 				this->Hexa->Capablity[StackU] += NodeU->MaxStress;
 			}
 
-			for (int StackL = Slice + 1; StackL < StacksMax; StackL++)
+			for (int StackL = Slice + 1; StackL < SlicesMax; StackL++)
 			{
 				auto& NodeL = this->Hexa->Nodes[StackL][Index];
 				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeL->SlidingStrength));
@@ -248,28 +273,28 @@ TestPiece_t::TestPiece_t()
 {
 	this->Hexa =  new Hexa_t;
 
-	this->Visited = new uint64_t* [StacksMax];
-	for (auto s = 0; s < StacksMax; s++)
+	this->Visited = new uint64_t* [SlicesMax];
+	for (auto s = 0; s < SlicesMax; s++)
 	{
 		this->Visited[s] = new uint64_t [NodeMax];
 		for (auto n = 0; n < NodeMax; n++)
 			this->Visited[s][n] = 0;
 	}
 
-	this->Color = new uint64_t[StacksMax];
+	this->Color = new uint64_t[SlicesMax];
 
-	for (auto s = 0; s < StacksMax; s++)
+	for (auto s = 0; s < SlicesMax; s++)
 		Color[s] = 0;
 	
 	this->Ready = true;
 	this->SyncTotalStep = 1;
 
-	this->OverLoadNodes = new TQueue_t<Node_t*>* [StacksMax];
-	this->BFSSeq = new TQueue_t<LLSNode_t>* [StacksMax];
-	this->AnsSeq = new TVector_t<LLSNode_t>* [StacksMax];
-	this->ToUpdate = new TQueue_t<Node_t*>* [StacksMax];
+	this->OverLoadNodes = new TQueue_t<Node_t*>* [SlicesMax];
+	this->BFSSeq = new TQueue_t<LLSNode_t>* [SlicesMax];
+	this->AnsSeq = new TVector_t<LLSNode_t>* [SlicesMax];
+	this->ToUpdate = new TQueue_t<Node_t*>* [SlicesMax];
 
-	for (unsigned int s = 0; s < StacksMax; s++)
+	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		this->OverLoadNodes[s] = new TQueue_t<Node_t*>(NodeMax);
 		this->BFSSeq[s] = new TQueue_t<LLSNode_t>(NodeMax);
@@ -277,8 +302,8 @@ TestPiece_t::TestPiece_t()
 		this->ToUpdate[s] = new TQueue_t<Node_t*>(NodeMax);
 	}
 
-	this->DebugCounter = new unsigned int[StacksMax];
-	for (unsigned int s = 0; s < StacksMax; s++)
+	this->DebugCounter = new unsigned int[SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
 		DebugCounter[s] = 0;
 
 
