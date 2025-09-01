@@ -21,7 +21,7 @@ constexpr double MaxLoad = 1250 * E6;
 
 #ifdef FiberT1
 constexpr double MaxLoad = 2000 * E6;
-#define IncLoad11
+#define IncLoad21
 #endif
 
 #ifdef Spectra71
@@ -32,6 +32,12 @@ constexpr unsigned int LoadPercent[LoadStepMax] = { 0,68,51,72,44,65,44,72,48,68
 #ifdef IncLoad11
 constexpr unsigned int LoadStepMax = 11;
 constexpr unsigned int LoadPercent[LoadStepMax] = { 0,10,20,30,40,50,60,70,80,90,100 };
+#endif
+
+
+#ifdef IncLoad21
+constexpr unsigned int LoadStepMax = 21;
+constexpr unsigned int LoadPercent[LoadStepMax] = { 0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100 };
 #endif
 
 constexpr unsigned int LLSIMax = 3;

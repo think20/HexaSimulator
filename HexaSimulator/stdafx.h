@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cmath>
 
-#define FiberT1 true
+#define FiberF3 true
 
 constexpr double E3 = 1000;
 constexpr double E6 = 1000 * E3;

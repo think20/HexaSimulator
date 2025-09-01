@@ -35,15 +35,33 @@ constexpr double OffsetB = 2.2076;
 constexpr double Vm = 1 - Vf;
 
 #ifdef SiCf_Ti6242HT
+//Elastic Modules
 constexpr double Ef = 434.3 * E9;
 constexpr double Em = 88.3 * E9;
 
+//Yielding Strength
+constexpr double Sigmams = 550 * E6;
+
+//Heat Residual Stress
+constexpr double Alpham = 8.7 * EM6;
+constexpr double Alphaf = 4.5 * EM6;
+constexpr double Nium = 0.33;
+constexpr double Niuf = 0.25;
+constexpr double DeltaT = -320;
+constexpr double dint = 2.5 * EM6;
+
+constexpr double Alphac = (Alpham * Vm * Em + Alphaf * Vf * Ef) / (Vf * Ef + Vm * Em);
+constexpr double Gamma = Ef * Em / (Ef * (1 + Nium) + Em * (1 - Niuf));
+
+constexpr double Sigmam_heat_radical = Gamma * (Alphac - Alpham) * DeltaT;
+constexpr double Sigmam_heat_axial = Em * (Alphac - Alpham) * DeltaT;
+
+const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigmams - 12.0 * Sigmam_heat_radical * Sigmam_heat_radical) - 4.0 * Sigmam_heat_axial) / 4.0;
+
+//Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
 constexpr double Cm = 3 * EM9 * 0.01; //3*10^-11
 constexpr double Mm = 3.1256;
-
-constexpr double MartixYieldStrength = 700 * E6;//to be looked up
-constexpr double HeatResidualStress = 100 * E6;//to be looked up
 
 constexpr double Sigma0 = 3160 * E6;//3160MPa
 constexpr double mf = 14.89;

@@ -68,7 +68,7 @@ void TestPiece_t::FiberLoad(unsigned int Slice, unsigned int TotalStep)
 }
 void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep,unsigned int LoadCycle)
 {
-	double SliceFiberLoadFactor = FiberLoadFactor;
+	double SliceFiberLoadFactor = FiberLoadFactor; //default
 
 	auto& Crack = this->Hexa->Crack[Slice];
 	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
@@ -76,7 +76,18 @@ void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep,unsign
 	if (Crack != nullptr)
 	{
 		double Cracklen = Crack->UpdateCrack(double(CompositeLoad));
-		SliceFiberLoadFactor == Crack->Yb * Ef / Em;
+
+		if (Crack->Yield)
+		{
+			double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
+			double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - Cracklen * Cracklen) * SigmamMax;
+			double FiberForce = CompositeForce - MatrixForce;
+			double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
+			SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+
+		}
+		else SliceFiberLoadFactor == Crack->Yb * Ef / Em;
+
 		if (Cracklen > Crack->MaxCrackLen)
 		{
 			printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice, LoadCycle, Cracklen*E3);
@@ -85,8 +96,17 @@ void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep,unsign
 			printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n",Crack->Yb,SliceFiberLoadFactor );
 			system("pause");
 		}
-
-
+	}
+	else
+	{
+		if (double(CompositeLoad) * MatrixLoadFactor > SigmamMax)
+		{
+			double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
+			double MatrixForce = Vm * pi * SpecimenRadious * SpecimenRadious * SigmamMax;
+			double FiberForce = CompositeForce - MatrixForce;
+			double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
+			SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+		}
 	}
 
 	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
@@ -99,7 +119,7 @@ void TestPiece_t::LoadDistribute(unsigned int Slice,unsigned int LoadStep,unsign
 		*/
 	if (LoadRatio > MaxLoadRatio)
 	{
-		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf\n", Slice,LoadCycle,LoadStep,double(TotalLoad / this->Hexa->NodeCount[Slice]), double(Load));
+		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice,LoadCycle,LoadStep,double(this->Hexa->Capablity[Slice] / this->Hexa->NodeCount[Slice]), double(Load),double(CompositeLoad)*EM6);
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		system("pause");
