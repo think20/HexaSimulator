@@ -53,5 +53,8 @@
     <ClCompile Include="Crack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SpecimenGenerate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -160,6 +160,7 @@
     <ClCompile Include="HexaGenerate.cpp" />
     <ClCompile Include="Load.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SpecimenGenerate.cpp" />
     <ClCompile Include="Visualizer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -56,6 +56,10 @@ public:
 		{
 			return(Index == Iter2.Index);
 		}
+		Ty& operator*()
+		{
+			return ((this->Vec->Container[Index]));
+		}
 		Ty* operator->()
 		{
 			return (&(this->Vec->Container[Index]));

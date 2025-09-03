@@ -249,7 +249,6 @@ Hexa_t::Hexa_t()
 		NodeCount[s] = 0;
 	this->Finish = 0;
 
-	this->FiberBroken = new int64_t[NodeMax];
 
 	this->Capablity = new int64_t[SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)

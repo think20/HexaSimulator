@@ -45,8 +45,7 @@ constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2,1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax - 1)) * (LLSIMax - 1) / 2 * 6;
 
 constexpr double MaxLoadRatio = 0.95;
-
-constexpr unsigned int StackOverload = 1;
+constexpr double FiberOverloadFactor = 1000; // by trial,100~1000
 
 class LLSNode_t
 {
@@ -57,6 +56,26 @@ public:
 	unsigned int LLSIndex;
 	
 };
+class Slice_t
+{
+public:
+	Slice_t(Hexa_t*, unsigned int);
+	TVector_t<Node_t*>* Nodes;
+	unsigned int NodeCount;
+	int64_t Capablity;
+	Crack_t* Crack;
+
+	Hexa_t* Hexa;
+	unsigned int Slice;
+
+	uint64_t* Visited;
+	uint64_t Color;
+
+	TQueue_t<Node_t*>* OverLoadNodes;
+	TQueue_t<LLSNode_t>* BFSSeq;
+	TVector_t<LLSNode_t>* AnsSeq;
+	TQueue_t<Node_t*>* ToUpdate;
+};
 
 class TestPiece_t
 {
@@ -66,25 +85,22 @@ public:
 
 private:
 	void FibersLoad(unsigned int, unsigned int);
-	void FiberLoad(unsigned int, unsigned int);
+	void FiberLoad(Slice_t*, unsigned int);
 
-	void LoadDistribute(unsigned int,unsigned int,unsigned int);
-	void LoadRedistribute(unsigned int);
-	void FiberDamage(unsigned int);
+	void LoadDistribute(Slice_t*,unsigned int,unsigned int);
+	void LoadRedistribute(Slice_t*);
+	void FiberDamage(Slice_t*);
 
 	void UpdateMaxStress();
 
-	void FindNeighbors(unsigned int);
+	void CrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
+	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
+	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
+	double FindFiberLoadBaseline(Slice_t*);
+	void FindNeighbors(Slice_t*);
 
 	Hexa_t* Hexa;
-
-	uint64_t** Visited;
-	uint64_t* Color;
-
-	TQueue_t<Node_t*>** OverLoadNodes;
-	TQueue_t<LLSNode_t>** BFSSeq;
-	TVector_t<LLSNode_t>** AnsSeq;
-	TQueue_t<Node_t*>** ToUpdate;
+	Slice_t** Slice;
 
 	unsigned int* DebugCounter;
 

@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include "Material.h"
 #include "Crack.h"
+#include "TDataStructure.h"
+
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -54,33 +56,15 @@ public:
 
 	bool OverBoarder;
 };
-
 class Hexa_t
 {
 public:
 	Hexa_t();	
 	Node_t*** Nodes;
 	unsigned int* NodeCount;
-	int64_t* FiberBroken;
 	int64_t* Capablity;
 	Crack_t** Crack;
 
-	class StackwiseIterator_t
-	{
-	public:
-		Hexa_t::StackwiseIterator_t& operator++(int)
-		{
-			Index++;
-			while (Index <= Hexa->NodeCount[Slice] && Nodes[Index]->OverBoarder)
-				Index++;
-			return *this;
-		}
-	private:
-		unsigned int Index;
-		Hexa_t* Hexa;
-		unsigned int Slice;
-		Node_t** Nodes;
-	};
 private:
 	void HexaGenerateP();
 	void HexasGenerate(unsigned int);
@@ -97,8 +81,6 @@ private:
 	unsigned int Finish;
 	std::mutex mtx;
 	std::condition_variable cv;
-
-
 
 };
 

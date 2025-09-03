@@ -27,3 +27,7 @@ double const& Crack_t::UpdateCrack(double Sigma)
 
 	return a;
 }
+double const& Crack_t::Len()
+{
+	return a;
+}
