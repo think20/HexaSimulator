@@ -10,6 +10,8 @@
 void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 {
 	auto TotalStepMax = CycleMax * LoadStepMax;
+	unsigned int LoadStep = 0;
+	unsigned int LoadCycle = 0;
 
 	std::thread th[ThreadMax];
 	for (auto i = 0; i < ThreadMax; i++)
@@ -22,10 +24,14 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		auto Cycle = SyncTotalStep %(100* LoadStepMax);
 		if (Cycle == 0) printf("%d\n", SyncTotalStep/LoadStepMax);
 
+		LoadStep = SyncTotalStep % LoadStepMax;
+		LoadCycle = SyncTotalStep / LoadStepMax;
+
 		std::unique_lock<std::mutex> lock(this->mtx);
 
 		//printf("Syncing TotalStep %u\n", this->SyncTotalStep);
 		this->UpdateMaxStress();
+		//this->SyncLoadDistibute(LoadStep, LoadCycle);
 		//printf("Sync Finish\n");
 
 		cvm.wait(lock, [&] {return this->Finish == ThreadMax; });
@@ -37,6 +43,16 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		cv.notify_all();
 	}
 
+}
+void TestPiece_t::SyncLoadDistibute(unsigned int LoadStep, unsigned int LoadCycle)
+{
+	for (unsigned int s = 0; s < SlicesMax - 1; s++)
+	{
+		LoadDistribute(Slice[s], LoadStep, LoadCycle);
+		SetFiberMinimumStress(Slice[s], Slice[s + 1]);
+	}
+
+	LoadDistribute(Slice[SlicesMax-1], LoadStep, LoadCycle);
 }
 void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 {
@@ -61,110 +77,21 @@ void TestPiece_t::FiberLoad(Slice_t* Slice, unsigned int TotalStep)
 {
 	unsigned int LoadStep = TotalStep % LoadStepMax;
 	unsigned int LoadCycle = TotalStep / LoadStepMax;
+
+	//Otherwise Distributed in sync
+
 	LoadDistribute(Slice, LoadStep, LoadCycle);
 	LoadRedistribute(Slice);
 	FiberDamage(Slice);
 	return;
 }
+
 void TestPiece_t::LoadDistribute(Slice_t* Slice,unsigned int LoadStep,unsigned int LoadCycle)
 {
 	auto& Crack = Slice->Crack;
 	if (Crack != nullptr) CrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
 	else NonCrackLoadDistribute(Slice, LoadStep, LoadCycle);
 
-}
-void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
-{
-	double SliceFiberLoadFactor = FiberLoadFactor; //default
-	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
-
-	if (double(CompositeLoad) * MatrixLoadFactor > SigmamMax)
-	{
-		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
-		double MatrixForce = Vm * pi * SpecimenRadious * SpecimenRadious * SigmamMax;
-		double FiberForce = CompositeForce - MatrixForce;
-		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
-		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
-	}
-
-	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
-
-	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
-	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
-	{
-		(*Node)->Load = Load;
-	}
-}
-void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
-{
-	double SliceFiberLoadFactor = FiberLoadFactor; //default
-	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
-
-	auto& Crack = Slice->Crack;
-
-	double Cracklen = Crack->UpdateCrack(double(CompositeLoad));
-	if (Cracklen > Crack->MaxCrackLen)
-	{
-		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, Cracklen * E3);
-		for (unsigned int s = 0; s < SlicesMax; s++)
-			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
-		printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", Crack->Yb, SliceFiberLoadFactor);
-		system("pause");
-	}
-
-	if (Crack->Yield)
-	{
-		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
-		double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - Cracklen * Cracklen) * SigmamMax;
-		double FiberForce = CompositeForce - MatrixForce;
-		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
-		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
-	}
-	else SliceFiberLoadFactor == Crack->Yb * Ef / Em;
-
-	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
-
-	double BaseLine = FindFiberLoadBaseline(Slice);
-	SliceFiberLoadFactor *= BaseLine;
-	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
-
-	
-
-	double Len = Crack->Len();
-
-	for (auto Node=Slice->Nodes->Begin();Node!=Slice->Nodes->End();Node++)
-	{
-
-		auto& r = (*Node)->r;
-		double Factor = 1;//default, Fiber not in Crack
-
-		if (r < Len)
-			Factor = FiberOverloadFactor * sqrtl((Len - r));
-
-		(*Node)->Load = int64_t(Load * Factor);
-
-		//Load = k*u^1/2
-	}
-
-}
-void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle, double SliceFiberLoadFactor)
-{
-	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
-	uint64_t TotalLoad = Load * Slice->NodeCount;
-	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
-
-	double LoadRatio = double(TotalLoad) / double(Slice->Capablity);
-
-	/*if (LoadStep == 11)
-		printf("Slice %d:NodeLoad:%.2lf,AvgCap:%.2lf,Ratio:%.2lf,Nodes:%d\n", Slice, double(Load)*EM6, double(this->Hexa->Capablity[Slice])/double(this->Hexa->NodeCount[Slice]) * EM6, LoadRatio,this->Hexa->NodeCount[Slice]);
-		*/
-	if (LoadRatio > MaxLoadRatio)
-	{
-		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice->Slice, LoadCycle, LoadStep, double(Slice->Capablity / Slice->NodeCount)*EM6, double(Load)*EM6, double(CompositeLoad) * EM6);
-		for (unsigned int s = 0; s < SlicesMax; s++)
-			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
-		system("pause");
-	}
 }
 void TestPiece_t::LoadRedistribute(Slice_t* Slice)
 {
@@ -221,7 +148,6 @@ void TestPiece_t::LoadRedistribute(Slice_t* Slice)
 			}
 		}
 
-		
 		Node->Load = Node->MaxStress;
 		Slice->AnsSeq->Clear();
 	}
@@ -230,15 +156,12 @@ void TestPiece_t::FiberDamage(Slice_t* Slice)
 {
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
-
 		if ((*Node)->Load == (*Node)->Strength && (!(*Node)->Broken))
 		{
 			(*Node)->Broken = true;
 			Slice->ToUpdate->Push(*Node);
 		}
-		
 	}
-
 }
 void TestPiece_t::UpdateMaxStress()
 {
@@ -256,7 +179,7 @@ void TestPiece_t::UpdateMaxStress()
 			for (int StackU = s - 1; StackU >= 0; StackU--)
 			{
 				auto& NodeU = this->Hexa->Nodes[StackU][Index];
-				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeU->SlidingStrength) / (pi * R0 * R0));
+				StressMax += int64_t(2.0 * pi * R0 * L * double(NodeU->SlidingStrength) / (pi * R0 * R0));
 
 				this->Hexa->Capablity[StackU] -= NodeU->MaxStress;
 				NodeU->MaxStress = std::min(NodeU->MaxStress, StressMax);
@@ -266,7 +189,7 @@ void TestPiece_t::UpdateMaxStress()
 			for (int StackL = s + 1; StackL < SlicesMax; StackL++)
 			{
 				auto& NodeL = this->Hexa->Nodes[StackL][Index];
-				StressMax += unsigned int(2.0 * pi * R0 * L * double(NodeL->SlidingStrength) / (pi * R0 * R0));
+				StressMax += int64_t(2.0 * pi * R0 * L * double(NodeL->SlidingStrength) / (pi * R0 * R0));
 
 				this->Hexa->Capablity[StackL] -= NodeL->MaxStress;
 				NodeL->MaxStress = std::min(NodeL->MaxStress, StressMax);
@@ -277,6 +200,107 @@ void TestPiece_t::UpdateMaxStress()
 		//printf("Slice:%d Broken:%d\n",Slice,DebugCounter[Slice]);
 	}
 	//printf("=================================\n");
+}
+void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
+{
+	double SliceFiberLoadFactor = FiberLoadFactor; //default
+	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
+
+	auto& Crack = Slice->Crack;
+
+	double Cracklen = Crack->UpdateCrack(double(CompositeLoad));
+	if (Cracklen > Crack->MaxCrackLen)
+	{
+		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, Cracklen * E3);
+		for (unsigned int s = 0; s < SlicesMax; s++)
+			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
+		printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", Crack->Yb, SliceFiberLoadFactor);
+		system("pause");
+	}
+
+	if (Crack->Yield)
+	{
+		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
+		double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - Cracklen * Cracklen) * SigmamMax;
+		double FiberForce = CompositeForce - MatrixForce;
+		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
+		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+	}
+	else SliceFiberLoadFactor == Crack->Yb * Ef / Em;
+
+	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
+
+	double BaseLine = FindFiberLoadBaseline(Slice);
+	SliceFiberLoadFactor *= BaseLine;
+	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
+
+
+
+	double Len = Crack->Len();
+
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+
+		auto& r = (*Node)->r;
+		double Factor = 1;//default, Fiber not in Crack
+
+		if (r < Len)
+			Factor = FiberOverloadFactor * sqrtl((Len - r));
+
+		(*Node)->Load = int64_t(Load * Factor);
+
+		//Load = k*u^1/2
+	}
+
+}
+void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
+{
+	double SliceFiberLoadFactor = FiberLoadFactor; //default
+	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
+
+	if (double(CompositeLoad) * MatrixLoadFactor > SigmamMax)
+	{
+		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
+		double MatrixForce = Vm * pi * SpecimenRadious * SpecimenRadious * SigmamMax;
+		double FiberForce = CompositeForce - MatrixForce;
+		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
+		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+	}
+
+	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
+
+	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+		(*Node)->Load = Load;
+
+		if ((*Node)->Load < (*Node)->MinStress)
+		{
+			printf("Node:%d LoadUpscale due to neighbor Slice,from %lld to %lld,Cap %lld at Step:%d,Cyc:%d\n", (*Node)->Index, (*Node)->Load * EM6, (*Node)->MinStress * EM6, (*Node)->Strength * EM6, LoadStep, LoadCycle);
+			(*Node)->Load = (*Node)->MinStress;
+		}
+			
+	}
+}
+
+void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle, double SliceFiberLoadFactor)
+{
+	int64_t Load = int64_t((LoadPercent[LoadStep]) * MaxLoad * SliceFiberLoadFactor / 100.0);
+	int64_t TotalLoad = Load * Slice->NodeCount;
+	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
+
+	double LoadRatio = double(TotalLoad) / double(Slice->Capablity);
+
+	/*if (LoadStep == 11)
+		printf("Slice %d:NodeLoad:%.2lf,AvgCap:%.2lf,Ratio:%.2lf,Nodes:%d\n", Slice, double(Load)*EM6, double(this->Hexa->Capablity[Slice])/double(this->Hexa->NodeCount[Slice]) * EM6, LoadRatio,this->Hexa->NodeCount[Slice]);
+		*/
+	if (LoadRatio > MaxLoadRatio)
+	{
+		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice->Slice, LoadCycle, LoadStep, double(Slice->Capablity / Slice->NodeCount) * EM6, double(Load) * EM6, double(CompositeLoad) * EM6);
+		for (unsigned int s = 0; s < SlicesMax; s++)
+			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
+		system("pause");
+	}
 }
 double TestPiece_t::FindFiberLoadBaseline(Slice_t* Slice)
 {
@@ -299,6 +323,21 @@ double TestPiece_t::FindFiberLoadBaseline(Slice_t* Slice)
 	}
 	double BaseLine = double(Slice->NodeCount) / TotalFactor;
 	return BaseLine;
+}
+void TestPiece_t::SetFiberMinimumStress(Slice_t* LoadedSlice, Slice_t* NotLoadedSlice)
+{
+	auto LoadedNode = LoadedSlice->Nodes->Begin();
+	auto NotLoadedNode = NotLoadedSlice->Nodes->Begin();
+
+	while (LoadedNode != LoadedSlice->Nodes->End())
+	{
+		int64_t MaxLoadDrop = int64_t(2.0 * pi * R0 * L * double((*LoadedNode)->SlidingStrength) / (pi * R0 * R0));
+		int64_t MinLoad = (*LoadedNode)->Load - MaxLoadDrop;
+		if (MinLoad > 0) (*NotLoadedNode)->MinStress = MinLoad;
+		else (*NotLoadedNode)->MinStress = 0;
+
+		LoadedNode++;
+	}
 }
 void TestPiece_t::FindNeighbors(Slice_t* Slice)
 {

@@ -9,6 +9,7 @@ constexpr double Vf = 0.45;
 constexpr double OffsetK = 0.2529;
 constexpr double OffsetB = -0.6441;
 #define SiCf_Ti6242HT true
+//Exp 44345 SpectrumCyc
 #endif
 
 #ifdef FiberF2
@@ -16,6 +17,7 @@ constexpr double Vf = 0.45;
 constexpr double OffsetK = 0.2529;
 constexpr double OffsetB = -0.6441;
 #define SiCf_Ti6242HT true
+//Exp 4326 SCyc
 #endif
 
 #ifdef FiberF3
@@ -23,6 +25,7 @@ constexpr double Vf = 0.43;
 constexpr double OffsetK = 0.3363;
 constexpr double OffsetB = 2.2076;
 #define SiCf_Ti6242HT true
+//Exp 2813 SCyc
 #endif
 
 #ifdef FiberT1
@@ -30,6 +33,7 @@ constexpr double Vf = 0.43;
 constexpr double OffsetK = 0.3363;
 constexpr double OffsetB = 2.2076;
 #define SiCf_Ti6242HT true
+//Tension predection requires multiple cracks in a slice,do not use
 #endif
 
 constexpr double Vm = 1 - Vf;
@@ -63,8 +67,9 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 constexpr double Cm = 3 * EM9 * 0.01; //3*10^-11
 constexpr double Mm = 3.1256;
 
-constexpr double Sigma0 = 3160 * E6;//3160MPa
-constexpr double mf = 14.89;
+constexpr double Sigma0 = 3160 * E6 * 0.85;//3160MPa
+//constexpr double Sigma0 = 2000 * E6;
+constexpr double mf = 14.89*0.455;
 constexpr double Lg = 25.4 * EM3; //25.4mm Gauge Length
 
 constexpr double InitCrackRadious = 55 * EM6;

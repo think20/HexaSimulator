@@ -163,6 +163,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		Node->OffsetAngle = 0;
 		Node->OffsetDamageFactor = 0;
 		Node->Strength = int64_t(FiberStrength(Seed));
+		Node->MinStress = 0;
 		Node->MaxStress = Node->Strength;
 		Node->SlidingStrength = SlidingStrength0;
 
@@ -182,6 +183,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 
 		NodeNow->Strength = int64_t(FiberStrength(Seed));
 		//printf("Strength:%u\n", NodeNow->Strength/1000'000);
+		NodeNow->MinStress = 0;
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;
 		if (!NodeNow->OverBoarder)

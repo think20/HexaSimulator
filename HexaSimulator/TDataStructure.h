@@ -73,8 +73,6 @@ public:
 		TVector_t<Ty>* Vec;
 	};
 
-	TVector_t<Ty>::Iterator_t* LazyBegin;
-	TVector_t<Ty>::Iterator_t* LazyEnd;
 	TVector_t<Ty>::Iterator_t Begin();
 	TVector_t<Ty>::Iterator_t End();
 

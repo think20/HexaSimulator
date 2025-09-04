@@ -47,6 +47,7 @@ public:
 
 	int64_t Strength;
 	int64_t MaxStress;
+	int64_t MinStress;
 	int64_t Load;
 	int64_t SlidingStrength;
 

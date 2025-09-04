@@ -20,7 +20,7 @@ constexpr double MaxLoad = 1250 * E6;
 #endif
 
 #ifdef FiberT1
-constexpr double MaxLoad = 2000 * E6;
+constexpr double MaxLoad = 3000 * E6;
 #define IncLoad21
 #endif
 
@@ -68,8 +68,8 @@ public:
 	Hexa_t* Hexa;
 	unsigned int Slice;
 
-	uint64_t* Visited;
-	uint64_t Color;
+	int64_t* Visited;
+	int64_t Color;
 
 	TQueue_t<Node_t*>* OverLoadNodes;
 	TQueue_t<LLSNode_t>* BFSSeq;
@@ -84,6 +84,8 @@ public:
 	void FiberLoadP(unsigned int);
 
 private:
+	void SyncLoadDistibute(unsigned int, unsigned int);
+
 	void FibersLoad(unsigned int, unsigned int);
 	void FiberLoad(Slice_t*, unsigned int);
 
@@ -97,6 +99,8 @@ private:
 	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
 	double FindFiberLoadBaseline(Slice_t*);
+	void SetFiberMinimumStress(Slice_t*, Slice_t*);
+
 	void FindNeighbors(Slice_t*);
 
 	Hexa_t* Hexa;
