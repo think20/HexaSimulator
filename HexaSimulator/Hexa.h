@@ -10,7 +10,7 @@
 #include <queue>
 #include <random>
 
-constexpr double SpecimenRadious = 1500 * EM6;
+
 
 constexpr unsigned int NeighberMax = 6;
 constexpr unsigned int LayerMax = 15;

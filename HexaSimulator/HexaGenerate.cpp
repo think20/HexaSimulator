@@ -192,8 +192,8 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 	if (Slice == 0)
 	{
 		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
-		//this->Crack[Slice] = new Crack_t(InitCrackRadious, Req);
-		this->SideCrack[Slice] = new SideCrack_t(20 * EM6, 20 * EM6, SpecimenRadious);
+		this->Crack[Slice] = new Crack_t(InitCrackRadious, Req);
+		//this->SideCrack[Slice] = new SideCrack_t(50 * EM6, 50 * EM6, SpecimenRadious);
 	}
 		
 }

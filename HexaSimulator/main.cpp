@@ -17,6 +17,7 @@ int main()
 {
 	auto TestPiece = new TestPiece_t;
 	TestPiece->FiberLoadP(100'0000);
+	//auto Hexa = new Hexa_t;
 
 	return 0;
 
