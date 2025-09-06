@@ -64,6 +64,7 @@ public:
 	unsigned int NodeCount;
 	int64_t Capablity;
 	Crack_t* Crack;
+	SideCrack_t* SideCrack;
 
 	Hexa_t* Hexa;
 	unsigned int Slice;
@@ -96,10 +97,14 @@ private:
 	void UpdateMaxStress();
 
 	void CrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
+	void SideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
 	double FindFiberLoadBaseline(Slice_t*);
 	void SetFiberMinimumStress(Slice_t*, Slice_t*);
+
+	double FindFiberLoadBaselineWithCrack(Slice_t*);
+	double FindFiberLoadBaselineWithSideCrack(Slice_t*);
 
 	void FindNeighbors(Slice_t*);
 

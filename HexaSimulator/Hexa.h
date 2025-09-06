@@ -65,6 +65,7 @@ public:
 	unsigned int* NodeCount;
 	int64_t* Capablity;
 	Crack_t** Crack;
+	SideCrack_t** SideCrack;
 
 private:
 	void HexaGenerateP();

@@ -12,6 +12,7 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 	}
 	this->Capablity = Hexa->Capablity[Slice];
 	this->Crack = Hexa->Crack[Slice];
+	this->SideCrack = Hexa->SideCrack[Slice];
 	this->NodeCount = Hexa->NodeCount[Slice];
 
 	this->Visited = new int64_t[NodeMax];

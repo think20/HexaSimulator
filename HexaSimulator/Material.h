@@ -60,6 +60,7 @@ constexpr double Gamma = Ef * Em / (Ef * (1 + Nium) + Em * (1 - Niuf));
 constexpr double Sigmam_heat_radical = Gamma * (Alphac - Alpham) * DeltaT;
 constexpr double Sigmam_heat_axial = Em * (Alphac - Alpham) * DeltaT;
 
+
 const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigmams - 12.0 * Sigmam_heat_radical * Sigmam_heat_radical) - 4.0 * Sigmam_heat_axial) / 4.0;
 
 //Crack Propgation 

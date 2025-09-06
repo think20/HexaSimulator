@@ -2,7 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cmath>
 
-#define FiberT1 true
+#define FiberF1 true
 
 constexpr double E3 = 1000;
 constexpr double E6 = 1000 * E3;
@@ -16,4 +16,6 @@ constexpr unsigned int ThreadMax = 4; //for Laptop
 
 constexpr double Tolerance = E3;
 
+// Side Crack Should be added, Yb:?
+// Reaction Layer damage and following fiber damage should be added, 1400MPa
 
