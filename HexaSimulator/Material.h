@@ -256,7 +256,7 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 
 //Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
-constexpr double Cm = 3 * EM6 *0.01; //3*10^-11
+constexpr double Cm = 3 * EM9*0.1; //3*10^-10
 constexpr double Mm = 3.1256;
 
 constexpr double Sigma0 = 4600 * E6 * 0.85;//3160MPa

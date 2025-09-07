@@ -2,7 +2,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cmath>
 
-#define BLFHT4 true
+#define FiberF3 true
+#define CrackModel true
 
 constexpr double E3 = 1000;
 constexpr double E6 = 1000 * E3;

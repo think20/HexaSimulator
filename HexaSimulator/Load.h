@@ -90,7 +90,7 @@ constexpr double MaxLoad = 1350 * E6;
 #endif
 
 #ifdef BLFHT4
-constexpr double MaxLoad = 1200 * E6;
+constexpr double MaxLoad = 1170 * E6;
 #define Spectra4
 #endif
 

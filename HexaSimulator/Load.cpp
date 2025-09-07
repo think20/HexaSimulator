@@ -325,6 +325,14 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 		double FiberForce = CompositeForce - MatrixForce;
 		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+
+		double Req = sqrtl(Slice->NodeCount * R0 * R0 / Vf);
+#ifdef CrackModel
+		Slice->Crack = new Crack_t(InitCrackRadious, Req);
+#endif
+#ifdef SideCrackModel
+		Slice->SideCrack = new SideCrack_t(50 * EM6, 50 * EM6, SpecimenRadious);
+#endif
 	}
 
 	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);

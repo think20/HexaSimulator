@@ -2,6 +2,7 @@
 #include "Material.h"
 #include "Crack.h"
 #include <math.h>
+#include <cstdio>
 
 double const& Crack_t::UpdateCrack(double Sigma)
 {
@@ -48,6 +49,8 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 	Kb = Yb * Sigma * sqrt(pi * b) * EM6; //MPa
 	Kc = Yc * Sigma * sqrt(pi * c) * EM6; //MPa
+
+	//printf("kb:%.2lf MPa/m^1/2\n", Kb);
 
 	double DeltaKb = Kb - Kb0;
 	double DeltaKc = Kc - Kc0;
