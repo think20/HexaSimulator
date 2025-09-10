@@ -217,6 +217,13 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", Crack->Yb, SliceFiberLoadFactor);
+		for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+		{
+			if ((*Node)->Broken)
+			{
+				printf("%d,%d\n", int((*Node)->x * E6), int((*Node)->y * E6));
+			}
+		}
 		system("pause");
 	}
 
@@ -268,6 +275,14 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		//printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", SideCrack->Yb, SliceFiberLoadFactor);
+
+		for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+		{
+			if ((*Node)->Broken)
+			{
+				printf("%d,%d\n", int((*Node)->x * E6), int((*Node)->y * E6));
+			}
+		}
 		system("pause");
 	}
 

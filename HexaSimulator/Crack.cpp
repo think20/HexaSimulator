@@ -22,7 +22,23 @@ double const& Crack_t::UpdateCrack(double Sigma)
 	if (not(Sigmab > Sigmab0)) return a;
 
 	double deltaKb = (Sigmab-Sigmab0) * sqrtl(pi * a) * EM6;// MPa/m^1/2
-	double dadn = Cm * powl(deltaKb, Mm);//m
+	double Kb = Sigmab * sqrtl(pi * a) * EM6;
+
+	if (Kb > KIC)
+	{
+		a = MaxCrackLen+1*EM6;
+		return a;
+	}
+
+	double Cb = Cm[0];
+	double Mb = Mm[0];
+
+	if (deltaKb > KLow)
+	{
+		Cb = Cm[1];
+		Mb = Mm[1];
+	}
+	double dadn = Cb * powl(deltaKb, Mb);//m
 	
 	a += dadn;
 
@@ -52,11 +68,37 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 	//printf("kb:%.2lf MPa/m^1/2\n", Kb);
 
+	if (Kb > KIC)
+	{
+		b = MaxCrackLen+1*EM6;
+		return b;
+	}
+
 	double DeltaKb = Kb - Kb0;
 	double DeltaKc = Kc - Kc0;
 
-	if (DeltaKb > 0) b += Cm * powl(DeltaKb, Mm) * dbFactor;
-	if (DeltaKc > 0) c += Cm * powl(DeltaKc, Mm) * dcFactor;
+	double Cb = Cm[0];
+	double Cc = Cm[0];
+
+	double Mb = Mm[0];
+	double Mc = Mm[0];
+
+	if (DeltaKb>KLow)
+	{
+		Cb = Cm[1];
+		Mb = Mm[1];
+	}
+	if (DeltaKc>KLow)
+	{
+		Cc = Cm[1];
+		Mc = Mm[1];
+	}
+	//printf("%.2lf\n", DeltaKb);
+
+	if (DeltaKb > 0) b += Cb * powl(DeltaKb, Mb) * dbFactor;
+	if (DeltaKc > 0) c += Cc * powl(DeltaKc, Mc) * dcFactor;
+
+	//printf("%.2lf\n", b * E6);
 
 	//y=kx+b,Right half of the crack front
 	k0 = (c * c - 2 * b * R * R) / (c * R * sqrt(4 - c * c / (R * R)));

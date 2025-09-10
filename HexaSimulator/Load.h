@@ -51,47 +51,63 @@ constexpr double MaxLoad = 900 * E6;
 
 #ifdef BLFRT1
 constexpr double MaxLoad = 2100 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFRT2
 constexpr double MaxLoad = 1650 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFRT3
 constexpr double MaxLoad = 1200 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFRT4
 constexpr double MaxLoad = 1000 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFRT5
 constexpr double MaxLoad = 600 * E6;
-#define Spectra4
+#define Spectra2
 #endif
+
+#ifdef BLFRT6
+constexpr double MaxLoad = 700 * E6;
+#define Spectra2
+#endif
+
 
 #ifdef BLFHT1
 constexpr double MaxLoad = 1600 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFHT2
 constexpr double MaxLoad = 1500 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFHT3
 constexpr double MaxLoad = 1350 * E6;
-#define Spectra4
+#define Spectra2
 #endif
 
 #ifdef BLFHT4
 constexpr double MaxLoad = 1170 * E6;
-#define Spectra4
+#define Spectra2
+#endif
+
+#ifdef BLFHT5
+constexpr double MaxLoad = 975 * E6;
+#define Spectra2
+#endif
+
+#ifdef BLFHT6
+constexpr double MaxLoad = 905 * E6;
+#define Spectra2
 #endif
 
 #ifdef Spectra71
@@ -113,6 +129,11 @@ constexpr unsigned int LoadPercent[LoadStepMax] = { 0,5,10,15,20,25,30,35,40,45,
 #ifdef Spectra4
 constexpr unsigned int LoadStepMax = 4;
 constexpr unsigned int LoadPercent[LoadStepMax] = { 10,50,100,50 };
+#endif
+
+#ifdef Spectra2
+constexpr unsigned int LoadStepMax = 2;
+constexpr unsigned int LoadPercent[LoadStepMax] = { 0,100 };
 #endif
 
 constexpr unsigned int LLSIMax = 3;

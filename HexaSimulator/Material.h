@@ -113,6 +113,13 @@ constexpr double OffsetB = 2.2076;
 #define SCS6_Ti6242RT true
 #endif
 
+#ifdef BLFRT6
+constexpr double Vf = 0.36;
+constexpr double OffsetK = 0.3363;
+constexpr double OffsetB = 2.2076;
+#define SCS6_Ti6242RT true
+#endif
+
 #ifdef BLFHT1
 constexpr double Vf = 0.36;
 constexpr double OffsetK = 0.3363;
@@ -135,6 +142,20 @@ constexpr double OffsetB = 2.2076;
 #endif
 
 #ifdef BLFHT4
+constexpr double Vf = 0.36;
+constexpr double OffsetK = 0.3363;
+constexpr double OffsetB = 2.2076;
+#define SCS6_Ti6242HT true
+#endif
+
+#ifdef BLFHT5
+constexpr double Vf = 0.36;
+constexpr double OffsetK = 0.3363;
+constexpr double OffsetB = 2.2076;
+#define SCS6_Ti6242HT true
+#endif
+
+#ifdef BLFHT6
 constexpr double Vf = 0.36;
 constexpr double OffsetK = 0.3363;
 constexpr double OffsetB = 2.2076;
@@ -170,8 +191,10 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 
 //Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
-constexpr double Cm = 3 * EM9 * 0.01; //3*10^-11
-constexpr double Mm = 3.1256;
+constexpr double Cm[] = { 2 * EM14,3 * EM11 }; //3*10^-11
+constexpr double Mm[] = { 11.0,3.1256 };
+constexpr double KLow = 2.5;
+constexpr double KIC = 70;
 
 constexpr double Sigma0 = 3160 * E6 * 0.85;//3160MPa
 //constexpr double Sigma0 = 2000 * E6;
@@ -213,8 +236,10 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 
 //Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
-constexpr double Cm = 2.678 * EM9 * 0.01; //2.678*10^-11
-constexpr double Mm = 3.812;
+constexpr double Cm[] = {2 * EM14,2.678 * EM11}; //2.678*10^-11
+constexpr double Mm[] = { 11.0,3.812 };
+constexpr double KLow = 2.5;
+constexpr double KIC = 70;
 
 constexpr double Sigma0 = 3160 * E6 * 0.85;//3160MPa
 //constexpr double Sigma0 = 2000 * E6;
@@ -256,8 +281,10 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 
 //Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
-constexpr double Cm = 3 * EM9*0.1; //3*10^-10
-constexpr double Mm = 3.1256;
+constexpr double Cm[] = { 2 * EM14,3 * EM11 }; //3*10^-11
+constexpr double Mm[] = { 11.0,3.1256 };
+constexpr double KLow = 2.5;
+constexpr double KIC = 70;
 
 constexpr double Sigma0 = 4600 * E6 * 0.85;//3160MPa
 //constexpr double Sigma0 = 2000 * E6;
@@ -299,8 +326,10 @@ const double SigmamMax = (2.0 * Sigmam_heat_radical + sqrt(16.0 * Sigmams * Sigm
 
 //Crack Propgation 
 //dadN(m) = Cm*(DeltaK(Mpa))^Mm
-constexpr double Cm = 2.678 * EM9 * 0.01; //2.678*10^-11
-constexpr double Mm = 3.812;
+constexpr double Cm[] = { 2 * EM14,2.678 * EM11 }; //2.678*10^-11
+constexpr double Mm[] = { 14,3.812 };
+constexpr double KLow = 2.5;
+constexpr double KIC = 70;
 
 constexpr double Sigma0 = 4600 * E6 * 0.85;//3160MPa
 //constexpr double Sigma0 = 2000 * E6;

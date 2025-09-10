@@ -11,6 +11,8 @@ constexpr double E9 = 1000 * E6;
 constexpr double EM3 = 0.001;
 constexpr double EM6 = 0.001 * EM3;
 constexpr double EM9 = 0.001 * EM6;
+constexpr double EM11 = 0.01 * EM9;
+constexpr double EM14 = 0.001 * EM11;
 constexpr double pi = 3.14;
 
 constexpr unsigned int ThreadMax = 4; //for Laptop
