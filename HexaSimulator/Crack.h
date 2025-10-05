@@ -1,4 +1,12 @@
 #pragma once
+#include "stdafx.h"
+#include "TDataStructure.h"
+
+#include <random>
+
+constexpr unsigned int MaxCrackCount = SlicesMax;
+constexpr unsigned int MaxSideCrackCount = SlicesMax;
+
 class Crack_t
 {
 public: 
@@ -26,7 +34,7 @@ constexpr double dcFactor = 1;
 class SideCrack_t
 {
 public:
-	SideCrack_t(double b0 = 0, double c0 = 0, double R = 0) : S(0), MaxCrackLen(0.99 * 2 * R), Yb(0), Yc(0), Kb(0), Kc(0), b(b0), c(c0), D(2 * R), R(R), k0(0), b0(0) {}
+	SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0) : S(0), MaxCrackLen(0.99 * 2 * R), Yb(0), Yc(0), Kb(0), Kc(0), b(b0), c(c0), D(2 * R), R(R), k0(0), b0(0), Orient(Orient) {}
 	double UpdateCrack(double);
 	double DistanceToCrackFront(double x, double y);
 	double S;
@@ -36,4 +44,21 @@ private:
 	double Kb, Kc;
 	double b, c, D, R;
 	double k0, b0;
+	double Orient;
+};
+
+class CrackManager_t
+{
+public:
+	CrackManager_t();
+	Crack_t* CreateCrack(double, unsigned int);
+	SideCrack_t* CreateSideCrack(unsigned int);
+
+	Crack_t** Crack;
+	SideCrack_t** SideCrack;
+private:
+	std::random_device RandDevice;
+	std::uniform_real_distribution<>* OrientDist;
+	unsigned int Seed;
+
 };

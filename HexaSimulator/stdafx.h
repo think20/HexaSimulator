@@ -17,6 +17,8 @@ constexpr double pi = 3.14;
 
 constexpr unsigned int ThreadMax = 4; //for Laptop
 
+constexpr unsigned int SlicesMax = 16;//put here so both Crack.h and Hexa.h can see
+
 constexpr double Tolerance = E3;
 
 // Side Crack Should be added, Yb:?

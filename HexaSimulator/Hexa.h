@@ -14,7 +14,7 @@
 
 constexpr unsigned int NeighberMax = 6;
 constexpr unsigned int LayerMax = 15;
-constexpr unsigned int SlicesMax = 16;
+
 constexpr unsigned int StackPerThread = SlicesMax / ThreadMax;
 
 constexpr unsigned int NodeMax = ((2 - 1) + (LayerMax - 1)) * (LayerMax - 1) / 2 * 6 + 1;
@@ -64,8 +64,7 @@ public:
 	Node_t*** Nodes;
 	unsigned int* NodeCount;
 	int64_t* Capablity;
-	Crack_t** Crack;
-	SideCrack_t** SideCrack;
+	CrackManager_t* CrackManager;
 
 private:
 	void HexaGenerateP();

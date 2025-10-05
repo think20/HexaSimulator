@@ -11,8 +11,8 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 		if (!Node->OverBoarder) Nodes->Push(Node);
 	}
 	this->Capablity = Hexa->Capablity[Slice];
-	this->Crack = Hexa->Crack[Slice];
-	this->SideCrack = Hexa->SideCrack[Slice];
+	this->Crack = Hexa->CrackManager->Crack[Slice];
+	this->SideCrack = Hexa->CrackManager->SideCrack[Slice];
 	this->NodeCount = Hexa->NodeCount[Slice];
 
 	this->Visited = new int64_t[NodeMax];
@@ -30,7 +30,7 @@ TestPiece_t::TestPiece_t()
 {
 	this->Hexa = new Hexa_t;
 
-	this->Slice = new Slice_t * [SlicesMax];
+	this->Slice = new Slice_t* [SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		Slice[s] = new Slice_t(this->Hexa, s);

@@ -193,10 +193,10 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 	{
 		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
 #ifdef CrackModel
-		this->Crack[Slice] = new Crack_t(InitCrackRadious, Req);
+		CrackManager->CreateCrack(Req, Slice);
 #endif
 #ifdef SideCrackModel
-		this->SideCrack[Slice] = new SideCrack_t(50 * EM6, 50 * EM6, SpecimenRadious);
+		CrackManager->CreateSideCrack(Slice);
 #endif
 	}
 		
@@ -261,13 +261,7 @@ Hexa_t::Hexa_t()
 	for (unsigned int s = 0; s < SlicesMax; s++)
 		Capablity[s] = 0;
 
-	this->Crack = new Crack_t* [SlicesMax];
-	for (unsigned int s = 0; s < SlicesMax; s++)
-		Crack[s] = nullptr;
-
-	this->SideCrack = new SideCrack_t * [SlicesMax];
-	for (unsigned int s = 0; s < SlicesMax; s++)
-		SideCrack[s] = nullptr;
+	this->CrackManager = new CrackManager_t();
 
 	this->HexaGenerateP(); //RAII
 }

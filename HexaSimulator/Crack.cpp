@@ -113,8 +113,39 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 double SideCrack_t::DistanceToCrackFront(double x, double y)
 {
+	x = x * cosf(Orient);
+	y = y * sinf(Orient);
+
 	//only the right half of the crack is modeled, and the crack is about the symmetry of the y-axis
 	x = fabs(x);
 
 	return ((y - k0 * x - b0) * sqrt(1 / (k0 * k0 + 1)));
+}
+
+CrackManager_t::CrackManager_t()
+{
+	this->Crack = new Crack_t* [MaxCrackCount];
+	this->SideCrack = new SideCrack_t* [MaxSideCrackCount];
+
+	for (auto s = 0; s < MaxCrackCount; s++)
+	{
+		Crack[s] = nullptr;
+		SideCrack[s] = nullptr;
+	}
+
+	this->OrientDist = new std::uniform_real_distribution<>(0.0, 2.0 * pi);
+
+}
+Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
+{
+	auto NewCrack = new Crack_t(InitCrackRadious, Req);
+	Crack[Slice] = NewCrack;
+	return NewCrack;
+}
+SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
+{
+	double Orient = (*OrientDist)(RandDevice);
+	auto NewSideCrack = new SideCrack_t(InitCrackRadious, InitCrackRadious, SpecimenRadious, Orient);
+	SideCrack[Slice] = NewSideCrack;
+	return NewSideCrack;
 }

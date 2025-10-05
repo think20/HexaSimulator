@@ -358,3 +358,6 @@ constexpr double OffsetFactor = 60;// 60% per deg
 
 constexpr unsigned int SlidingStrength0 = 100 * E6;
 
+constexpr double CrackInitK = -0.0089;
+constexpr double CrackInitB = 1.3 * E6;
+

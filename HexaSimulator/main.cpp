@@ -19,6 +19,9 @@ int main()
 	TestPiece->FiberLoadP(1000'0000);
 	//auto Hexa = new Hexa_t;
 
+	//printf("%.2lf\n", sin(6.28));
+
+
 	return 0;
 
 }
