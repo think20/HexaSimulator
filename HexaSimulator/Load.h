@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-#include "Material.h"
+
 #include "Hexa.h"
 #include "TDataStructure.h"
 
@@ -24,17 +24,17 @@ constexpr double MaxLoad = 300 * E6;
 #define Spectra71
 #endif
 
-#ifdef FiberF1
+#ifdef F1
 constexpr double MaxLoad = 1000 * E6;
 #define Spectra71
 #endif
 
-#ifdef FiberF2
+#ifdef F2
 constexpr double MaxLoad = 1250 * E6;
 #define Spectra71
 #endif
 
-#ifdef FiberF3
+#ifdef F3
 constexpr double MaxLoad = 1250 * E6;
 #define Spectra71
 #endif
@@ -141,7 +141,7 @@ constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2,1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax - 1)) * (LLSIMax - 1) / 2 * 6;
 
 constexpr double MaxLoadRatio = 0.95;
-constexpr double FiberOverloadFactor = 1000; // by trial,100~1000
+constexpr double FiberOverloadFactor = 100; // by trial,100~1000
 
 class LLSNode_t
 {
@@ -173,11 +173,34 @@ public:
 	TVector_t<LLSNode_t>* AnsSeq;
 	TQueue_t<Node_t*>* ToUpdate;
 };
+class TestPieceInit_t
+{
+public:
+	double R0, L, SpecimenRadious;
 
+	double Vm, Vf, Em, Ef;
+
+	double Alpham, Alphaf, Nium, Niuf;
+	double DeltaT, dint;
+	double Sigmams;
+
+	unsigned int LoadStepMax;
+	unsigned int* LoadPercent;
+	double MaxLoad;
+
+	double mf, Sigma0, Lg;
+	double StrengthDecay, ScatterDecay;
+	double SlidingStrength0;
+
+	double InitCrackRadious, SpecimenRadious;
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+};
 class TestPiece_t
 {
 public:
-	TestPiece_t();
+	TestPiece_t(TestPieceInit_t Init);
 	void FiberLoadP(unsigned int);
 
 private:
@@ -204,6 +227,9 @@ private:
 
 	void FindNeighbors(Slice_t*);
 
+	void ParametersCopying(TestPieceInit_t Init);
+	void HexaInitReady(TestPieceInit_t Init);
+
 	Hexa_t* Hexa;
 	Slice_t** Slice;
 
@@ -216,5 +242,17 @@ private:
 	bool Ready;
 	unsigned int SyncTotalStep;
 
+	double R0, L, SpecimenRadious;
+
+	double Vm, Vf, Em, Ef;
+	double FiberLoadFactor, MatrixLoadFactor;
+
+	double SigmamMax;
+
+	unsigned int LoadStepMax;
+	unsigned int* LoadPercent;
+	double MaxLoad;
+
+	HexaInit_t* HexaInit;
 };
 

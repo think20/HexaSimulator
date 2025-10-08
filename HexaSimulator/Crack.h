@@ -7,10 +7,21 @@
 constexpr unsigned int MaxCrackCount = SlicesMax;
 constexpr unsigned int MaxSideCrackCount = SlicesMax;
 
+class CrackInit_t
+{
+public:
+	double Em, Ef, Vm, Vf;
+	double SigmamMax;
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+
+};
+
 class Crack_t
 {
 public: 
-	Crack_t(double a0 = 0, double R = 0) : Yb(0), Yield(false), MaxCrackLen(0.99 * R), Sigmab(0), a(a0), Req(R) {}
+	Crack_t(double a0 = 0, double R = 0, CrackInit_t Init);
 	double const& UpdateCrack(double);
 	double const& Len();
 	double Yb;
@@ -18,9 +29,16 @@ public:
 	double MaxCrackLen;
 
 private:
+	void ParametersCopying(CrackInit_t Init);
 	double Sigmab;
 	double a;
 	double Req;
+
+	double Em, Ef, Vm, Vf;
+	double SigmamMax;
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
 };
 
 constexpr unsigned int bTerm = 5;
@@ -30,35 +48,63 @@ constexpr double cPara[cTerm] = { 1.12,-2.61,7.34,1.41,-4.28 };
 constexpr double dbFactor = 1.5;
 constexpr double dcFactor = 1;
 
+class SideCrackInit_t
+{
+public:
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+};
 
 class SideCrack_t
 {
 public:
-	SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0) : S(0), MaxCrackLen(0.99 * 2 * R), Yb(0), Yc(0), Kb(0), Kc(0), b(b0), c(c0), D(2 * R), R(R), k0(0), b0(0), Orient(Orient) {}
+	SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0, SideCrackInit_t Init);
 	double UpdateCrack(double);
 	double DistanceToCrackFront(double x, double y);
 	double S;
 	double MaxCrackLen;
 private:
+	void ParametersCopying(SideCrackInit_t Init);
 	double Yb, Yc;
 	double Kb, Kc;
 	double b, c, D, R;
 	double k0, b0;
 	double Orient;
-};
 
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+};
+class CrackManagerInit_t
+{
+public:
+	double InitCrackRadious, SpecimenRadious;
+
+	double Em, Ef, Vm, Vf;
+	double SigmamMax;
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+};
 class CrackManager_t
 {
 public:
-	CrackManager_t();
+	CrackManager_t(CrackManagerInit_t Init);
 	Crack_t* CreateCrack(double, unsigned int);
 	SideCrack_t* CreateSideCrack(unsigned int);
 
 	Crack_t** Crack;
 	SideCrack_t** SideCrack;
 private:
+	void ParametersCopying(CrackManagerInit_t Init);
+	void CrackInitReady(CrackManagerInit_t Init);
+	void SideCrackInitReady(CrackManagerInit_t Init);
 	std::random_device RandDevice;
 	std::uniform_real_distribution<>* OrientDist;
 	unsigned int Seed;
 
+	double InitCrackRadious, SpecimenRadious;
+	CrackInit_t* CrackInit;
+	SideCrackInit_t* SideCrackInit;
 };

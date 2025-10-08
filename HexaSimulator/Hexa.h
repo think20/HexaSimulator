@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-#include "Material.h"
+
 #include "Crack.h"
 #include "TDataStructure.h"
 
@@ -9,8 +9,6 @@
 #include <condition_variable>
 #include <queue>
 #include <random>
-
-
 
 constexpr unsigned int NeighberMax = 6;
 constexpr unsigned int LayerMax = 15;
@@ -57,10 +55,27 @@ public:
 
 	bool OverBoarder;
 };
+
+class HexaInit_t
+{
+public:
+	double R0, SpecimenRadious;
+	double Vf;
+	double mf, Sigma0, L, Lg;
+	double StrengthDecay, ScatterDecay;
+	double SlidingStrength0;
+
+	double InitCrackRadious, SpecimenRadious;
+	double Em, Ef, Vm;
+	double SigmamMax;
+	double KLow, KIC;
+	double* Cm;
+	double* Mm;
+};
 class Hexa_t
 {
 public:
-	Hexa_t();	
+	Hexa_t(HexaInit_t Init);	
 	Node_t*** Nodes;
 	unsigned int* NodeCount;
 	int64_t* Capablity;
@@ -79,10 +94,18 @@ private:
 	static unsigned int Convert31(const unsigned int&, const unsigned int&, const unsigned int&);
 	static unsigned int Convert21(const unsigned int&, const unsigned int&);
 
+	void ParametersCopying(HexaInit_t Init);
+	void CrackManagerInitReady(HexaInit_t Init);
+
 	unsigned int Finish;
 	std::mutex mtx;
 	std::condition_variable cv;
 
+	double R0, R1, SpecimenRadious;
+	double Vf;
+	double mf, SigmaL;
+	double SlidingStrength0;
+	CrackManagerInit_t* CrackManagerInit;
 };
 
 

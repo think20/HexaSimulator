@@ -343,7 +343,7 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 
 		double Req = sqrtl(Slice->NodeCount * R0 * R0 / Vf);
 #ifdef CrackModel
-		Slice->Crack = Hexa->CrackManager->CreateCrack(InitCrackRadious, Slice->Slice);
+		Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
 #endif
 #ifdef SideCrackModel
 		Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);

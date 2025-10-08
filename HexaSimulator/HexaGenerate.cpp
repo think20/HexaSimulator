@@ -241,8 +241,40 @@ Node_t::Node_t()
 
 	this->OverBoarder = false;
 }
-Hexa_t::Hexa_t()
+void Hexa_t::ParametersCopying(HexaInit_t Init)
 {
+	R0 = Init.R0;
+	R1 = sqrt(pi / (2 * sqrt(3) * Init.Vf)) * R0;
+	SpecimenRadious = Init.SpecimenRadious;
+	Vf = Init.Vf;
+	mf = Init.mf * Init.ScatterDecay;
+	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);
+	SlidingStrength0 = Init.SlidingStrength0;
+}
+void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
+{
+	CrackManagerInit = new CrackManagerInit_t;
+	CrackManagerInit->InitCrackRadious = Init.InitCrackRadious;
+	CrackManagerInit->SpecimenRadious = Init.SpecimenRadious;
+	CrackManagerInit->Em = Init.Em;
+	CrackManagerInit->Ef = Init.Ef;
+	CrackManagerInit->Vm = Init.Vm;
+	CrackManagerInit->Vf = Init.Vf;
+	CrackManagerInit->KLow = Init.KLow;
+	CrackManagerInit->KIC = Init.KIC;
+	CrackManagerInit->Cm = new double[2];
+	CrackManagerInit->Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		CrackManagerInit->Cm[i] = Init.Cm[i];
+		CrackManagerInit->Mm[i] = Init.Mm[i];
+	}
+}
+Hexa_t::Hexa_t(HexaInit_t Init)
+{
+	ParametersCopying(Init);
+	CrackManagerInitReady(Init);
+
 	this->Nodes = new Node_t * *[SlicesMax];
 	this->NodeCount = new unsigned int[SlicesMax];
 
@@ -261,7 +293,7 @@ Hexa_t::Hexa_t()
 	for (unsigned int s = 0; s < SlicesMax; s++)
 		Capablity[s] = 0;
 
-	this->CrackManager = new CrackManager_t();
+	this->CrackManager = new CrackManager_t(*CrackManagerInit);
 
 	this->HexaGenerateP(); //RAII
 }

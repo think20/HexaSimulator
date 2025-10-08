@@ -38,7 +38,7 @@ constexpr double OffsetB = -0.6441;
 //no Expdata
 #endif
 
-#ifdef FiberF1
+#ifdef F1
 constexpr double Vf = 0.45;
 constexpr double OffsetK = 0.2529;
 constexpr double OffsetB = -0.6441;
@@ -46,7 +46,7 @@ constexpr double OffsetB = -0.6441;
 //Exp 44345 SpectrumCyc
 #endif
 
-#ifdef FiberF2
+#ifdef F2
 constexpr double Vf = 0.45;
 constexpr double OffsetK = 0.2529;
 constexpr double OffsetB = -0.6441;
@@ -54,7 +54,7 @@ constexpr double OffsetB = -0.6441;
 //Exp 4326 SCyc
 #endif
 
-#ifdef FiberF3
+#ifdef F3
 constexpr double Vf = 0.43;
 constexpr double OffsetK = 0.3363;
 constexpr double OffsetB = 2.2076;
@@ -358,6 +358,4 @@ constexpr double OffsetFactor = 60;// 60% per deg
 
 constexpr unsigned int SlidingStrength0 = 100 * E6;
 
-constexpr double CrackInitK = -0.0089;
-constexpr double CrackInitB = 1.3 * E6;
 

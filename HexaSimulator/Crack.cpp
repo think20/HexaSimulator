@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Material.h"
+
 #include "Crack.h"
 #include <math.h>
 #include <cstdio>
@@ -121,9 +121,104 @@ double SideCrack_t::DistanceToCrackFront(double x, double y)
 
 	return ((y - k0 * x - b0) * sqrt(1 / (k0 * k0 + 1)));
 }
-
-CrackManager_t::CrackManager_t()
+void Crack_t::ParametersCopying(CrackInit_t Init)
 {
+	Em = Init.Em;
+	Ef = Init.Ef;
+	Vm = Init.Vm;
+	Vf = Init.Vf;
+	SigmamMax = Init.SigmamMax;
+	KLow = Init.KLow;
+	KIC = Init.KIC;
+	Cm = new double[2];
+	Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		Cm[i] = Init.Cm[i];
+		Mm[i] = Init.Mm[i];
+	}
+}
+Crack_t::Crack_t(double a0 = 0, double R = 0, CrackInit_t Init)
+{
+	ParametersCopying(Init);
+
+	Yb = 0;
+	Yield = false;
+	MaxCrackLen = 0.99 * R;
+	Sigmab = 0;
+	a = a0;
+	Req = R;
+}
+void SideCrack_t::ParametersCopying(SideCrackInit_t Init)
+{
+	KLow = Init.KLow;
+	KIC = Init.KIC;
+	Cm = new double[2];
+	Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		Cm[i] = Init.Cm[i];
+		Mm[i] = Init.Mm[i];
+	}
+}
+SideCrack_t::SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0, SideCrackInit_t Init)
+{
+	ParametersCopying(Init);
+	S = 0;
+	MaxCrackLen = 0.99 * 2 * R;
+	Yb = 0;
+	Yc = 0;
+	Kb = 0;
+	Kc = 0;
+	b = b0;
+	c = c0;
+	D = 2 * R;
+	this->R = R;
+	k0 = 0;
+	b0 = 0;
+	Orient = Orient;
+}
+void CrackManager_t::ParametersCopying(CrackManagerInit_t Init)
+{
+	InitCrackRadious = Init.InitCrackRadious;
+	SpecimenRadious = Init.SpecimenRadious;
+}
+void CrackManager_t::CrackInitReady(CrackManagerInit_t Init)
+{
+	CrackInit = new CrackInit_t;
+	CrackInit->Em = Init.Em;
+	CrackInit->Ef = Init.Ef;
+	CrackInit->Vm = Init.Vm;
+	CrackInit->Vf = Init.Vf;
+	CrackInit->SigmamMax = Init.SigmamMax;
+	CrackInit->KLow = Init.KLow;
+	CrackInit->KIC = Init.KIC;
+	CrackInit->Cm = new double[2];
+	CrackInit->Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		CrackInit->Cm[i] = Init.Cm[i];
+		CrackInit->Mm[i] = Init.Mm[i];
+	}
+}
+void CrackManager_t::SideCrackInitReady(CrackManagerInit_t Init)
+{
+	SideCrackInit->KLow = Init.KLow;
+	SideCrackInit->KIC = Init.KIC;
+	SideCrackInit->Cm = new double[2];
+	SideCrackInit->Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		SideCrackInit->Cm[i] = Init.Cm[i];
+		SideCrackInit->Mm[i] = Init.Mm[i];
+	}
+}
+CrackManager_t::CrackManager_t(CrackManagerInit_t Init)
+{
+	ParametersCopying(Init);
+	CrackInitReady(Init);
+	SideCrackInitReady(Init);
+
 	this->Crack = new Crack_t* [MaxCrackCount];
 	this->SideCrack = new SideCrack_t* [MaxSideCrackCount];
 
@@ -138,14 +233,14 @@ CrackManager_t::CrackManager_t()
 }
 Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
 {
-	auto NewCrack = new Crack_t(InitCrackRadious, Req);
+	auto NewCrack = new Crack_t(InitCrackRadious, Req, *CrackInit);
 	Crack[Slice] = NewCrack;
 	return NewCrack;
 }
 SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
 {
 	double Orient = (*OrientDist)(RandDevice);
-	auto NewSideCrack = new SideCrack_t(InitCrackRadious, InitCrackRadious, SpecimenRadious, Orient);
+	auto NewSideCrack = new SideCrack_t(InitCrackRadious, InitCrackRadious, SpecimenRadious, Orient, *SideCrackInit);
 	SideCrack[Slice] = NewSideCrack;
 	return NewSideCrack;
 }
