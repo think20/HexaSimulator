@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Crack.h" />
     <ClInclude Include="Hexa.h" />
+    <ClInclude Include="TestManager.h" />
     <ClInclude Include="Load.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="stdafx.h" />

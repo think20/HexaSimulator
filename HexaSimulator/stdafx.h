@@ -20,6 +20,5 @@ constexpr unsigned int SlicesMax = 16;//put here so both Crack.h and Hexa.h can 
 
 constexpr double Tolerance = E3;
 
-// Side Crack Should be added, Yb:?
 // Reaction Layer damage and following fiber damage should be added, 1400MPa
 
