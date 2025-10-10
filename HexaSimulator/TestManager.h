@@ -1,6 +1,14 @@
 #pragma once
 #include "stdafx.h"
 #include "Load.h"
+
+constexpr unsigned int MaxFiberType = 4;
+constexpr unsigned int MaxMatrixType = 8;
+constexpr unsigned int MaxCompositeType = 16;
+constexpr unsigned int MaxSpectraType = 4;
+constexpr unsigned int MaxTestType = 32;
+constexpr unsigned int MaxTestPiece = MaxTestType;
+
 class Fiber_t
 {
 public:
@@ -30,6 +38,7 @@ public:
 };
 class Spectra_t
 {
+public:
 	unsigned int ID;
 	char* SpectraName;
 	unsigned int LoadStepMax;
@@ -37,6 +46,7 @@ class Spectra_t
 };
 class Test_t
 {
+public:
 	unsigned int ID;
 	char* TestName;
 	unsigned int CompositeID;
@@ -44,15 +54,6 @@ class Test_t
 	double MaxLoad;
 	unsigned int DesiredLife;
 };
-class InputManager_t
-{
-public:
-	InputManager_t();
-private:
-	void GetFibers();
-
-};
-
 class TestManager_t
 {
 public:
@@ -62,6 +63,26 @@ public:
 	void DisplayResults();
 
 private:
+	void AssembleTestPiece(unsigned int);
 
+	class InputManager_t
+	{
+	public:
+		InputManager_t();
+	private:
+		void GetFibers();
 
+	};
+
+	InputManager_t* InputManager;
+
+	TestPiece_t** TestPiece;
+	TestPieceInit_t** Init;
+	Test_t** Test;
+	Spectra_t** Spectra;
+	Composite_t** Composite;
+	Matrix_t** Matrix;
+	Fiber_t** Fiber;
+
+	unsigned int TestCount, SpectraCount, CompositeCount, MatrixCount, FiberCount;
 };
