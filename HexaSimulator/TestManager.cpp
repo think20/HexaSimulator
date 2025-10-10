@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "TestManager.h"
+
+#include <cstring>
+
 void TestManager_t::CreateTests()
 {
 	for (unsigned int t = 0; t < TestCount; t++)
@@ -55,6 +58,55 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->KLow = NowMatrix->KLow;
 	NowInit->KIC = NowMatrix->KIC;
 }
+void TestManager_t::InputManager_t::GetRawData()
+{
+	for (; RecordCount < MaxRecordCount; RecordCount++)
+	{
+		if (fscanf(FIn, "%s\n", RawData[RecordCount]) == EOF) break;
+	}
+}
+void TestManager_t::InputManager_t::GetFibers()
+{
+	auto& FiberTypeCount = TestManager->FiberTypeCount;
+
+	//Skip "FiberTypeCount" Row
+	Record++; 
+
+	sscanf(RawData[Record], "%d", &FiberTypeCount);
+
+	//Skip "FiberID..." Row
+	Record++;
+	
+	for (unsigned int Offset = 0; Offset < FiberTypeCount; Offset++)
+	{
+		TestManager->Fiber[Offset] = new Fiber_t;
+		auto& Fiber = TestManager->Fiber[Offset];
+		Fiber->FiberName = new char[MaxNameLen];
+		memset(Fiber->FiberName, 0, sizeof Fiber->FiberName);
+
+
+	}
+
+}
+TestManager_t::InputManager_t::InputManager_t(TestManager_t* TestManager)
+{
+	std::string DirS(Dir);
+	std::string TestDataS(TestData);
+
+	RawData = new char* [MaxRecordCount];
+	for (unsigned int r = 0; r < MaxRecordCount; r++)
+	{
+		RawData[r] = new char[MaxRecordLen];
+		memset(RawData[r], 0, sizeof RawData[r]);
+	}
+
+	FIn = fopen((DirS + TestDataS).c_str(), "r");
+
+	RecordCount = 0;
+	Record = 0;
+
+	this->TestManager = TestManager;
+}
 TestManager_t::TestManager_t()
 {
 	TestPiece = new TestPiece_t* [MaxTestPiece];
@@ -65,5 +117,5 @@ TestManager_t::TestManager_t()
 	Matrix = new Matrix_t* [MaxMatrixType];
 	Fiber = new Fiber_t * [MaxFiberType];
 
-	InputManager = new TestManager_t::InputManager_t;
+	InputManager = new TestManager_t::InputManager_t(this);
 }

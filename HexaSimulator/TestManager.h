@@ -2,12 +2,20 @@
 #include "stdafx.h"
 #include "Load.h"
 
+#include <cstdio>
+
 constexpr unsigned int MaxFiberType = 4;
 constexpr unsigned int MaxMatrixType = 8;
 constexpr unsigned int MaxCompositeType = 16;
 constexpr unsigned int MaxSpectraType = 4;
 constexpr unsigned int MaxTestType = 32;
 constexpr unsigned int MaxTestPiece = MaxTestType;
+constexpr unsigned int MaxRecordCount = 128;
+constexpr unsigned int MaxRecordLen = 256;
+constexpr unsigned int MaxNameLen = 32;
+
+constexpr char Dir[] = "C:\\Users\\12155\\source\\repos\\HexaSimulator\\HexaSimulator\\";
+constexpr char TestData[] = "TestDataC.csv";
 
 class Fiber_t
 {
@@ -68,10 +76,17 @@ private:
 	class InputManager_t
 	{
 	public:
-		InputManager_t();
+		InputManager_t(TestManager_t*);
+		void GetRawData();
 	private:
 		void GetFibers();
 
+		char** RawData;
+		unsigned int RecordCount;
+		unsigned int Record;
+
+		FILE* FIn;
+		TestManager_t* TestManager;
 	};
 
 	InputManager_t* InputManager;
@@ -84,5 +99,5 @@ private:
 	Matrix_t** Matrix;
 	Fiber_t** Fiber;
 
-	unsigned int TestCount, SpectraCount, CompositeCount, MatrixCount, FiberCount;
+	unsigned int TestCount, SpectraCount, CompositeTypeCount, MatrixTypeCount, FiberTypeCount;
 };
