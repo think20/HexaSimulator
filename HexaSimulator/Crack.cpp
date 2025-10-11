@@ -138,7 +138,7 @@ void Crack_t::ParametersCopying(CrackInit_t Init)
 		Mm[i] = Init.Mm[i];
 	}
 }
-Crack_t::Crack_t(double a0 = 0, double R = 0, CrackInit_t Init)
+Crack_t::Crack_t(double a0, double R, CrackInit_t Init)
 {
 	ParametersCopying(Init);
 
@@ -161,7 +161,7 @@ void SideCrack_t::ParametersCopying(SideCrackInit_t Init)
 		Mm[i] = Init.Mm[i];
 	}
 }
-SideCrack_t::SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0, SideCrackInit_t Init)
+SideCrack_t::SideCrack_t(double b0, double c0, double R, double Orient, SideCrackInit_t Init)
 {
 	ParametersCopying(Init);
 	S = 0;

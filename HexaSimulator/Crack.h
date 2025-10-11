@@ -21,7 +21,7 @@ public:
 class Crack_t
 {
 public: 
-	Crack_t(double a0 = 0, double R = 0, CrackInit_t Init);
+	Crack_t(double, double, CrackInit_t Init);
 	double const& UpdateCrack(double);
 	double const& Len();
 	double Yb;
@@ -59,9 +59,9 @@ public:
 class SideCrack_t
 {
 public:
-	SideCrack_t(double b0 = 0, double c0 = 0, double R = 0, double Orient = 0, SideCrackInit_t Init);
+	SideCrack_t(double, double, double, double, SideCrackInit_t);
 	double UpdateCrack(double);
-	double DistanceToCrackFront(double x, double y);
+	double DistanceToCrackFront(double, double);
 	double S;
 	double MaxCrackLen;
 private:

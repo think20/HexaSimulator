@@ -80,6 +80,13 @@ private:
 		void GetRawData();
 	private:
 		void GetFibers();
+		void GetMatrixs();
+		void GetComposites();
+		void GetSpectras();
+		void GetTests();
+
+		void GetIDandName(char*, unsigned int&, char*, char*);
+		void GetNums(char*, unsigned int*, bool);
 
 		char** RawData;
 		unsigned int RecordCount;
@@ -101,3 +108,4 @@ private:
 
 	unsigned int TestCount, SpectraCount, CompositeTypeCount, MatrixTypeCount, FiberTypeCount;
 };
+

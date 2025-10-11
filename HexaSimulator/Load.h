@@ -192,7 +192,7 @@ public:
 	double StrengthDecay, ScatterDecay;
 	double SlidingStrength0;
 
-	double InitCrackRadious, SpecimenRadious;
+	double InitCrackRadious;
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
