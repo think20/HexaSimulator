@@ -5,7 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 // uchar* ,255=white,0=black CV_8UC1
-
+constexpr double SpecimenRadious = 1500 * EM6;
 constexpr unsigned int PicSize = SpecimenRadious * 1000 * 100 * 2;
 //*1000 m->mm; *100 100 units per mm;*2 radius->diameter;
 

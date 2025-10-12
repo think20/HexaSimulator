@@ -108,6 +108,8 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	S = (pi / 2 - acosl(c / (2 * R))) * R * R - 1 / 2 * (R - b) * c * sqrtl(1 - c * c / (4 * R * R));
 
 	//equivalent crack length
+	printf("SideCrackLen:%.2lfum\n", b * E6);
+
 	return b;
 }
 
@@ -203,6 +205,7 @@ void CrackManager_t::CrackInitReady(CrackManagerInit_t Init)
 }
 void CrackManager_t::SideCrackInitReady(CrackManagerInit_t Init)
 {
+	SideCrackInit = new SideCrackInit_t;
 	SideCrackInit->KLow = Init.KLow;
 	SideCrackInit->KIC = Init.KIC;
 	SideCrackInit->Cm = new double[2];

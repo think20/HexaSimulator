@@ -5,8 +5,13 @@
 
 void TestManager_t::CreateTests()
 {
+	InputManager->GetTestContent();
 	for (unsigned int t = 0; t < TestCount; t++)
 		AssembleTestPiece(t);
+}
+void TestManager_t::StartTests()
+{
+	TestPiece[1]->FiberLoadP(10'0000);
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -57,12 +62,24 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	}
 	NowInit->KLow = NowMatrix->KLow;
 	NowInit->KIC = NowMatrix->KIC;
+
+	TestPiece[TestID] = new TestPiece_t(*NowInit);
+}
+void TestManager_t::InputManager_t::GetTestContent()
+{
+	GetRawData();
+	GetFibers();
+	GetMatrixs();
+	GetComposites();
+	GetSpectras();
+	GetTests();
 }
 void TestManager_t::InputManager_t::GetRawData()
 {
 	for (; RecordCount < MaxRecordCount; RecordCount++)
 	{
-		if (fscanf(FIn, "%s\n", RawData[RecordCount]) == EOF) break;
+		if (fscanf(FIn, "%s", RawData[RecordCount]) == EOF) break;
+		//printf("Yes%d\n", RecordCount);
 	}
 }
 void TestManager_t::InputManager_t::GetFibers()
@@ -84,8 +101,10 @@ void TestManager_t::InputManager_t::GetFibers()
 		NewFiber->FiberName = new char[MaxNameLen];
 		memset(NewFiber->FiberName, 0, sizeof NewFiber->FiberName);
 
-		char* HeadlessData;
-		GetIDandName(RawData[Record], NewFiber->ID, NewFiber->FiberName, HeadlessData);
+
+		unsigned int StartPos = 0;
+		GetIDandName(RawData[Record], NewFiber->ID, NewFiber->FiberName, StartPos);
+		auto HeadlessData = &(RawData[Record][StartPos]);
 		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &NewFiber->Sigma0, &NewFiber->mf, &NewFiber->Lg, &NewFiber->Ef, &NewFiber->Niuf, &NewFiber->Alphaf, &NewFiber->R0, &NewFiber->StrengthDecay, &NewFiber->ScatterDecay);
 		NewFiber->Sigma0 *= E6;
 		NewFiber->Lg *= EM3;
@@ -113,8 +132,9 @@ void TestManager_t::InputManager_t::GetMatrixs()
 		NewMatrix->MatrixName = new char[MaxNameLen];
 		memset(NewMatrix->MatrixName, 0, sizeof NewMatrix->MatrixName);
 
-		char* HeadlessData;
-		GetIDandName(RawData[Record], NewMatrix->ID, NewMatrix->MatrixName, HeadlessData);
+		unsigned int StartPos = 0;
+		GetIDandName(RawData[Record], NewMatrix->ID, NewMatrix->MatrixName, StartPos);
+		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		NewMatrix->Cm = new double[2];
 		NewMatrix->Mm = new double[2];
@@ -151,8 +171,9 @@ void TestManager_t::InputManager_t::GetComposites()
 		NewComposite->CompositeName = new char[MaxNameLen];
 		memset(NewComposite->CompositeName, 0, sizeof NewComposite->CompositeName);
 
-		char* HeadlessData;
-		GetIDandName(RawData[Record], NewComposite->ID, NewComposite->CompositeName, HeadlessData);
+		unsigned int StartPos = 0;
+		GetIDandName(RawData[Record], NewComposite->ID, NewComposite->CompositeName, StartPos);
+		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%u,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint);
 		NewComposite->SpecimenRadious *= EM6;
@@ -161,10 +182,6 @@ void TestManager_t::InputManager_t::GetComposites()
 
 		Record++;
 	}
-}
-void TestManager_t::InputManager_t::GetTests()
-{
-
 }
 void TestManager_t::InputManager_t::GetSpectras()
 {
@@ -183,8 +200,9 @@ void TestManager_t::InputManager_t::GetSpectras()
 		NewSpectra->SpectraName = new char[MaxNameLen];
 		memset(NewSpectra, 0, sizeof NewSpectra);
 
-		char* HeadlessData;
-		GetIDandName(RawData[Record], NewSpectra->ID, NewSpectra->SpectraName, HeadlessData);
+		unsigned int StartPos = 0;
+		GetIDandName(RawData[Record], NewSpectra->ID, NewSpectra->SpectraName, StartPos);
+		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		sscanf(HeadlessData, "%d,", &NewSpectra->LoadStepMax);
 
@@ -194,9 +212,35 @@ void TestManager_t::InputManager_t::GetSpectras()
 		Record++;
 	}
 }
-void TestManager_t::InputManager_t::GetIDandName(char* From, unsigned int& ID, char* Name, char* NewHead)
+void TestManager_t::InputManager_t::GetTests()
 {
-	unsigned int Offset = 0;
+	auto& TestCount = TestManager->TestCount;
+
+	Record++;
+
+	sscanf(RawData[Record], "%d,", &TestCount);
+
+	Record += 2;
+
+	for (unsigned int Offset = 0; Offset < TestCount; Offset++)
+	{
+		TestManager->Test[Offset] = new Test_t;
+		auto& NewTest = TestManager->Test[Offset];
+		NewTest->TestName = new char[MaxNameLen];
+		memset(NewTest->TestName, 0, sizeof NewTest->TestName);
+
+		unsigned int StartPos = 0;
+		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
+		auto HeadlessData = &(RawData[Record][StartPos]);
+
+		sscanf(HeadlessData, "%u,%u,%lf,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife);
+		NewTest->MaxLoad *= E6;
+
+		Record++;
+	}
+}
+void TestManager_t::InputManager_t::GetIDandName(char* From, unsigned int& ID, char* Name, unsigned int& Offset)
+{
 	for (; Offset < MaxRecordLen; Offset++)
 	{
 		auto& c = From[Offset];
@@ -226,8 +270,6 @@ void TestManager_t::InputManager_t::GetIDandName(char* From, unsigned int& ID, c
 
 	//Skip the second ','
 	Offset++;
-
-	NewHead = &(From[Offset]);
 }
 void TestManager_t::InputManager_t::GetNums(char* From, unsigned int* Dest, bool IgnoreFirst)
 {
@@ -284,7 +326,11 @@ TestManager_t::InputManager_t::InputManager_t(TestManager_t* TestManager)
 		memset(RawData[r], 0, sizeof RawData[r]);
 	}
 
+	printf("Input from %s\n", (DirS + TestDataS).c_str());
+
 	FIn = fopen((DirS + TestDataS).c_str(), "r");
+	if (FIn == NULL)
+		printf("Warning No Input!\n");
 
 	RecordCount = 0;
 	Record = 0;

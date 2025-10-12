@@ -3,6 +3,7 @@
 #include "Load.h"
 #include "Crack.h"
 #include "Visualizer.h"
+#include "TestManager.h"
 
 #include <cmath>
 #include <ctime>
@@ -15,8 +16,9 @@
 
 int main()
 {
-	auto TestPiece = new TestPiece_t;
-	TestPiece->FiberLoadP(1000'0000);
+	auto TestManager = new TestManager_t;
+	TestManager->CreateTests();
+	TestManager->StartTests();
 	//auto Hexa = new Hexa_t;
 
 	//printf("%.2lf\n", sin(6.28));
