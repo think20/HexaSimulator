@@ -61,6 +61,8 @@ public:
 	unsigned int SpectraID;
 	double MaxLoad;
 	unsigned int DesiredLife;
+	double InitCrackRadious;
+	double L;
 };
 class TestManager_t
 {

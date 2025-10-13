@@ -182,7 +182,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		Convert23(Layer, Order, Edge, Node);
 
 		NodeNow->Strength = int64_t(FiberStrength(Seed));
-		//printf("Strength:%u\n", NodeNow->Strength/1000'000);
+		//printf("Strength:%lld\n", NodeNow->Strength/1000'000);
 		NodeNow->MinStress = 0;
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;
@@ -250,6 +250,8 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	mf = Init.mf * Init.ScatterDecay;
 	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);
 	SlidingStrength0 = Init.SlidingStrength0;
+
+	printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
 }
 void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 {
@@ -274,6 +276,8 @@ Hexa_t::Hexa_t(HexaInit_t Init)
 {
 	ParametersCopying(Init);
 	CrackManagerInitReady(Init);
+
+	//printf("FiberStrength:%.2lfMPa\n", Init.R0);
 
 	this->Nodes = new Node_t * *[SlicesMax];
 	this->NodeCount = new unsigned int[SlicesMax];

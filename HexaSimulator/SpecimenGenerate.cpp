@@ -33,6 +33,7 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit->Vf = Init.Vf;
 	HexaInit->mf = Init.mf;
 	HexaInit->Sigma0 = Init.Sigma0;
+	//printf("TestPiece:FiberStrength:%.2lfMPa\n", Init.Sigma0 * EM6);
 	HexaInit->L = Init.L;
 	HexaInit->Lg = Init.Lg;
 	HexaInit->StrengthDecay = Init.StrengthDecay;

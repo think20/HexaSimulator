@@ -108,7 +108,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	S = (pi / 2 - acosl(c / (2 * R))) * R * R - 1 / 2 * (R - b) * c * sqrtl(1 - c * c / (4 * R * R));
 
 	//equivalent crack length
-	printf("SideCrackLen:%.2lfum\n", b * E6);
+	//printf("SideCrackLen:%.2lfum\n", b * E6);
 
 	return b;
 }

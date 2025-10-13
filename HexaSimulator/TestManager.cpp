@@ -11,7 +11,7 @@ void TestManager_t::CreateTests()
 }
 void TestManager_t::StartTests()
 {
-	TestPiece[1]->FiberLoadP(10'0000);
+	TestPiece[4]->FiberLoadP(10'0000);
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -23,6 +23,8 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	auto& NowSpectra = Spectra[NowTest->SpectraID];
 
 	NowInit->MaxLoad = NowTest->MaxLoad;
+	NowInit->InitCrackRadious = NowTest->InitCrackRadious;
+	NowInit->L = NowTest->L;
 
 	NowInit->Vf = NowComposite->Vf;
 	//OffsetK and B not simulated yet;
@@ -64,6 +66,7 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->KIC = NowMatrix->KIC;
 
 	TestPiece[TestID] = new TestPiece_t(*NowInit);
+	//printf("TestManager:FiberStrength:%.2lfMPa\n", NowInit->Sigma0 * EM6);
 }
 void TestManager_t::InputManager_t::GetTestContent()
 {
@@ -111,6 +114,8 @@ void TestManager_t::InputManager_t::GetFibers()
 		NewFiber->Ef *= E9;
 		NewFiber->Alphaf *= EM6;
 		NewFiber->R0 *= EM6;
+
+		//printf("ID:%u,%lf\n",NewFiber->ID, NewFiber->Sigma0, NewFiber->mf);
 
 		Record++;
 	}
@@ -233,8 +238,11 @@ void TestManager_t::InputManager_t::GetTests()
 		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
-		sscanf(HeadlessData, "%u,%u,%lf,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife);
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->InitCrackRadious,&NewTest->L);
 		NewTest->MaxLoad *= E6;
+		NewTest->InitCrackRadious *= EM6;
+		NewTest->L *= EM6;
+		//printf("TestManager:L=%.2lfum\n", NewTest->L * E6);
 
 		Record++;
 	}
