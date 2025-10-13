@@ -102,4 +102,10 @@ TestPiece_t::TestPiece_t(TestPieceInit_t Init)
 		DebugCounter[s] = 0;
 
 	this->Finish = 0;
+
+
+	//Slices calculated in order in a thread. One thread throw only one failure.
+	this->FailureReport = new FailureReport_t * [ThreadMax];
+	for (unsigned int t = 0; t < ThreadMax; t++)
+		FailureReport[t] = nullptr;
 }

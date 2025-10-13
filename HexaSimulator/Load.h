@@ -124,6 +124,8 @@ private:
 	double MaxLoad;
 
 	HexaInit_t* HexaInit;
+
+	FailureReport_t** FailureReport;
 };
 class PlanePos_t
 {

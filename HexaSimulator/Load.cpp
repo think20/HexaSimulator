@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <random>
 #include <queue>
+
 void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 {
 	auto TotalStepMax = CycleMax * LoadStepMax;
@@ -22,7 +23,7 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 	while (this->SyncTotalStep < TotalStepMax)
 	{
 		auto Cycle = SyncTotalStep %(100* LoadStepMax);
-		if (Cycle == 0) printf("%d\n", SyncTotalStep/LoadStepMax);
+		if (Cycle == 0) printf("TestPiece:Cycle%d\n", SyncTotalStep/LoadStepMax);
 
 		LoadStep = SyncTotalStep % LoadStepMax;
 		LoadCycle = SyncTotalStep / LoadStepMax;
@@ -36,11 +37,17 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 
 		cvm.wait(lock, [&] {return this->Finish == ThreadMax; });
 
+
+		for(;;){}//seek
+		if (1 == 1) break;
+
 		this->SyncTotalStep++;
 		this->Finish = 0;
 		//printf("%d\n", SyncTotalStep);
 
 		cv.notify_all();
+
+		//now unique_lock destructs, mtx unlocked
 	}
 
 }
@@ -74,9 +81,19 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 			cv.wait(lock, [&] {return TotalStep == this->SyncTotalStep - 1; });
 		}
 	}
-	catch (FailureReport_t)
+	//All other threads will be stuck waiting for sync
+	catch (FailureReport_t& Report)
 	{
 		//this.failurereport = report
+		//printf("%d,%d\n", Report.Slice, Report.Cycle);
+		FailureReport[thread] = &Report;
+
+		//printf("%d,%d\n", FailureReport[thread]->Slice, FailureReport[thread]->Cycle);
+
+		std::unique_lock<std::mutex> lock(this->mtx);
+		this->Finish++;
+		cvm.notify_one();
+
 	}
 
 }
