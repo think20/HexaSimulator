@@ -4,138 +4,6 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
-#ifdef vFiberF11
-constexpr double MaxLoad = 800 * E6;
-#define Spectra71
-#endif
-
-#ifdef vFiberF12
-constexpr double MaxLoad = 600 * E6;
-#define Spectra71
-#endif
-
-#ifdef vFiberF13
-constexpr double MaxLoad = 400 * E6;
-#define Spectra71
-#endif
-
-#ifdef vFiberF14
-constexpr double MaxLoad = 300 * E6;
-#define Spectra71
-#endif
-
-#ifdef F1
-constexpr double MaxLoad = 1000 * E6;
-#define Spectra71
-#endif
-
-#ifdef F2
-constexpr double MaxLoad = 1250 * E6;
-#define Spectra71
-#endif
-
-#ifdef F3
-constexpr double MaxLoad = 1250 * E6;
-#define Spectra71
-#endif
-
-#ifdef FiberT1
-constexpr double MaxLoad = 3000 * E6;
-#define IncLoad21
-#endif
-
-#ifdef LF1
-constexpr double MaxLoad = 900 * E6;
-#define Spectra71
-#endif
-
-#ifdef BLFRT1
-constexpr double MaxLoad = 2100 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFRT2
-constexpr double MaxLoad = 1650 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFRT3
-constexpr double MaxLoad = 1200 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFRT4
-constexpr double MaxLoad = 1000 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFRT5
-constexpr double MaxLoad = 600 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFRT6
-constexpr double MaxLoad = 700 * E6;
-#define Spectra2
-#endif
-
-
-#ifdef BLFHT1
-constexpr double MaxLoad = 1600 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFHT2
-constexpr double MaxLoad = 1500 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFHT3
-constexpr double MaxLoad = 1350 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFHT4
-constexpr double MaxLoad = 1170 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFHT5
-constexpr double MaxLoad = 975 * E6;
-#define Spectra2
-#endif
-
-#ifdef BLFHT6
-constexpr double MaxLoad = 905 * E6;
-#define Spectra2
-#endif
-
-#ifdef Spectra71
-constexpr unsigned int LoadStepMax = 71;
-constexpr unsigned int LoadPercent[LoadStepMax] = { 0,68,51,72,44,65,44,72,48,68,26,99,52,100,52,83,49,99,51,75,49,56,49,62,48,100,79,86,80,90,76,80,74,95,83,99,94,98,95,100,65,70,66,77,53,58,55,96,92,95,76,83,72,78,73,81,56,68,57,70,46,72,16,93,33,41,30,36,22,30,0 };
-#endif
-
-#ifdef IncLoad11
-constexpr unsigned int LoadStepMax = 11;
-constexpr unsigned int LoadPercent[LoadStepMax] = { 0,10,20,30,40,50,60,70,80,90,100 };
-#endif
-
-
-#ifdef IncLoad21
-constexpr unsigned int LoadStepMax = 21;
-constexpr unsigned int LoadPercent[LoadStepMax] = { 0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100 };
-#endif
-
-#ifdef Spectra4
-constexpr unsigned int LoadStepMax = 4;
-constexpr unsigned int LoadPercent[LoadStepMax] = { 10,50,100,50 };
-#endif
-
-#ifdef Spectra2
-constexpr unsigned int LoadStepMax = 2;
-constexpr unsigned int LoadPercent[LoadStepMax] = { 0,100 };
-#endif
-
 constexpr unsigned int LLSIMax = 3;
 constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2,1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax - 1)) * (LLSIMax - 1) / 2 * 6;
@@ -197,8 +65,10 @@ public:
 	double* Cm;
 	double* Mm;
 };
+class FailureReport_t;
 class TestPiece_t
 {
+	friend class FailureReport_t;
 public:
 	TestPiece_t(TestPieceInit_t Init);
 	void FiberLoadP(unsigned int);
@@ -255,4 +125,22 @@ private:
 
 	HexaInit_t* HexaInit;
 };
+class PlanePos_t
+{
+public:
+	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y) {};
+	PlanePos_t(unsigned int X, unsigned int Y) : X(X), Y(Y) {};
 
+	unsigned int X, Y;
+};
+class FailureReport_t
+{
+public:
+	FailureReport_t(unsigned int, unsigned int, double, TestPiece_t*);
+	FailureReport_t(FailureReport_t& From);
+	~FailureReport_t();
+	unsigned int Slice, Cycle;
+	double CrackLen;
+	unsigned int* FractureCount;
+	TQueue_t<PlanePos_t*>** Fractures;
+};

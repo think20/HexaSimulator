@@ -162,7 +162,7 @@ constexpr double OffsetB = 2.2076;
 #define SCS6_Ti6242HT true
 #endif
 
-constexpr double Vm = 1 - Vf;
+//constexpr double Vm = 1 - Vf;
 
 #ifdef SiCf_Ti6242HT
 //Elastic Modules
@@ -344,6 +344,7 @@ constexpr double SpecimenRadious = 3500 * EM6 * 0.5;
 
 #endif
 
+/*
 constexpr double L = 100 * EM6; //100um segment
 const double SigmaL = Sigma0 * powf(L, -1.0 / mf) * powf(Lg, 1.0 / mf);
 
@@ -357,5 +358,5 @@ constexpr double ThetaThresh = 7; //above 7 degree of deviation cause compressio
 constexpr double OffsetFactor = 60;// 60% per deg
 
 constexpr unsigned int SlidingStrength0 = 100 * E6;
-
+*/
 

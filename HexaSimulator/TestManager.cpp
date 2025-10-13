@@ -242,7 +242,7 @@ void TestManager_t::InputManager_t::GetTests()
 		NewTest->MaxLoad *= E6;
 		NewTest->InitCrackRadious *= EM6;
 		NewTest->L *= EM6;
-		//printf("TestManager:L=%.2lfum\n", NewTest->L * E6);
+		//printf("TestManager:InitCrackLen=%.2lfum\n", NewTest->InitCrackRadious * E6);
 
 		Record++;
 	}

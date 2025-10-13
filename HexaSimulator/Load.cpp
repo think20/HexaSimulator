@@ -62,7 +62,11 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 		//printf("thread %u Start Tstep%u\n", thread, TotalStep);
 		for (auto s = 0; s < StackPerThread; s++)
 		{
-			FiberLoad(Slice[s + s0], TotalStep);		
+			try { FiberLoad(Slice[s + s0], TotalStep); }
+			catch (FailureReport_t)
+			{
+
+			}
 		}
 		std::unique_lock<std::mutex> lock(this->mtx);
 		this->Finish++;
@@ -80,7 +84,7 @@ void TestPiece_t::FiberLoad(Slice_t* Slice, unsigned int TotalStep)
 
 	//Otherwise Distributed in sync
 
-	LoadDistribute(Slice, LoadStep, LoadCycle);
+	LoadDistribute(Slice, LoadStep, LoadCycle); 
 	LoadRedistribute(Slice);
 	FiberDamage(Slice);
 	return;
@@ -90,11 +94,11 @@ void TestPiece_t::LoadDistribute(Slice_t* Slice,unsigned int LoadStep,unsigned i
 {
 	auto& Crack = Slice->Crack;
 	auto& SideCrack = Slice->SideCrack;
-	if (Crack != nullptr) CrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
+	if (Crack != nullptr)  CrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle); 
 	else if (SideCrack != nullptr) SideCrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
 	else NonCrackLoadDistribute(Slice, LoadStep, LoadCycle);
 
-}
+}	
 void TestPiece_t::LoadRedistribute(Slice_t* Slice)
 {
 	
@@ -210,10 +214,14 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 
 	auto& Crack = Slice->Crack;
 
-	double Cracklen = Crack->UpdateCrack(double(CompositeLoad));
-	if (Cracklen > Crack->MaxCrackLen)
+	double CrackLen = Crack->UpdateCrack(double(CompositeLoad));
+	
+	//printf("%.2lf\n", CrackLen);
+	if (CrackLen > Crack->MaxCrackLen)
 	{
-		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, Cracklen * E3);
+		//printf("Meow!\n");
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		/*printf("Crack too long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, CrackLen * E3);
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", Crack->Yb, SliceFiberLoadFactor);
@@ -224,13 +232,12 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 				printf("%d,%d\n", int((*Node)->x * E6), int((*Node)->y * E6));
 			}
 		}
-		system("pause");
+		system("pause");*/
 	}
-
 	if (Crack->Yield)
 	{
 		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
-		double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - Cracklen * Cracklen) * SigmamMax;
+		double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - CrackLen * CrackLen) * SigmamMax;
 		double FiberForce = CompositeForce - MatrixForce;
 		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
@@ -268,10 +275,10 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 
 	auto& SideCrack = Slice->SideCrack;
 
-	double Cracklen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor); // Far field load, not local
-	if (Cracklen > SideCrack->MaxCrackLen)
+	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor); // Far field load, not local
+	if (CrackLen > SideCrack->MaxCrackLen)
 	{
-		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, Cracklen * E3);
+		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, CrackLen * E3);
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		//printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", SideCrack->Yb, SliceFiberLoadFactor);
@@ -485,4 +492,60 @@ double TestPiece_t::FindFiberLoadBaselineWithSideCrack(Slice_t* Slice)
 	}
 	double BaseLine = double(Slice->NodeCount) / TotalFactor;
 	return BaseLine;
+}
+FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double CrackLen, TestPiece_t* TestPiece)
+{
+	this->Slice = Slice;
+	this->Cycle = Cycle;
+	this->CrackLen = CrackLen;
+
+	FractureCount = new unsigned int[SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
+		FractureCount[s] = 0;
+
+	Fractures = new TQueue_t<PlanePos_t*>* [SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
+		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
+
+	for (unsigned int s = 0; s < SlicesMax; s++)
+	{
+		auto& Nodes = TestPiece->Slice[s]->Nodes;
+		for (auto Node = Nodes->Begin(); Node != Nodes->End(); Node++)
+		{
+			if ((*Node)->Broken)
+			{
+				auto NewPlanePos = new PlanePos_t((*Node)->x, (*Node)->y);
+				Fractures[s]->Push(NewPlanePos);
+				FractureCount[s]++;
+			}
+		}
+	}
+}
+FailureReport_t::FailureReport_t(FailureReport_t& From)
+{
+	this->Slice = From.Slice;
+	this->Cycle = From.Cycle;
+	this->CrackLen = From.CrackLen;
+
+	FractureCount = new unsigned int[SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
+		FractureCount[s] = From.FractureCount[s];
+
+	Fractures = new TQueue_t<PlanePos_t*>*[SlicesMax];
+	for (unsigned int s = 0; s < SlicesMax; s++)
+		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
+
+	for (unsigned int s = 0; s < SlicesMax; s++)
+	{
+		while (!From.Fractures[s]->Empty())
+		{
+			auto NewPlanePos = new PlanePos_t(*From.Fractures[s]->Front());
+			From.Fractures[s]->Pop();
+		}
+	}
+}
+FailureReport_t::~FailureReport_t()
+{
+	// LET IT LEAK
+	return;
 }

@@ -20,8 +20,8 @@ void Hexa_t::HexaGenerateP()
 
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
 
-	for (unsigned int s = 0; s < SlicesMax; s++)
-		printf("Generated Slice %d with %d Nodes!\n", s, this->NodeCount[s]);
+	/*for (unsigned int s = 0; s < SlicesMax; s++)
+		printf("Hexa:Generated Slice %d with %d Nodes!\n", s, this->NodeCount[s]);*/
 	return;
 }
 void Hexa_t::HexasGenerate(unsigned int s0)
@@ -251,7 +251,7 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);
 	SlidingStrength0 = Init.SlidingStrength0;
 
-	printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
+	//printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
 }
 void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 {
@@ -262,6 +262,7 @@ void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 	CrackManagerInit->Ef = Init.Ef;
 	CrackManagerInit->Vm = Init.Vm;
 	CrackManagerInit->Vf = Init.Vf;
+	CrackManagerInit->SigmamMax = Init.SigmamMax;
 	CrackManagerInit->KLow = Init.KLow;
 	CrackManagerInit->KIC = Init.KIC;
 	CrackManagerInit->Cm = new double[2];

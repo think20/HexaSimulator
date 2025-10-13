@@ -12,6 +12,8 @@ double const& Crack_t::UpdateCrack(double Sigma)
 	Yb = Em * Req * Req / (a * a * Em * (Vf - 1) + Req * Req * (Em + Ef * Vf - Em * Vf));
 	Sigmab = Yb * Sigma;
 
+	//printf("Crack:Yb:%.2lf,Sigma:%.2lf\n", Yb, Sigma);
+
 	if (Sigmab > SigmamMax)
 	{
 		Sigmab = SigmamMax;
@@ -19,7 +21,12 @@ double const& Crack_t::UpdateCrack(double Sigma)
 	}
 	else Yield = false;
 
+	//printf("Crack:Sigmab%lf,Sigmab0%lf\n");
+	//printf("Crack:a %lf\n", a);
+
 	if (not(Sigmab > Sigmab0)) return a;
+	
+	//printf("Crack:Propgated!\n");
 
 	double deltaKb = (Sigmab-Sigmab0) * sqrtl(pi * a) * EM6;// MPa/m^1/2
 	double Kb = Sigmab * sqrtl(pi * a) * EM6;
@@ -39,6 +46,8 @@ double const& Crack_t::UpdateCrack(double Sigma)
 		Mb = Mm[1];
 	}
 	double dadn = Cb * powl(deltaKb, Mb);//m
+
+	//printf("Crack:dadn %lf\n", dadn);
 	
 	a += dadn;
 
@@ -238,6 +247,7 @@ Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
 {
 	auto NewCrack = new Crack_t(InitCrackRadious, Req, *CrackInit);
 	Crack[Slice] = NewCrack;
+	//printf("CrackManager: Created Crack with InitRadious:%.2lfum\n", InitCrackRadious * E6);
 	return NewCrack;
 }
 SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
