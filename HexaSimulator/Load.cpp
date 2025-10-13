@@ -57,23 +57,26 @@ void TestPiece_t::SyncLoadDistibute(unsigned int LoadStep, unsigned int LoadCycl
 void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 {
 	auto s0 = thread * StackPerThread;
-	for (unsigned int TotalStep = 1; TotalStep < TotalStepMax; TotalStep++)
+	try 
 	{
-		//printf("thread %u Start Tstep%u\n", thread, TotalStep);
-		for (auto s = 0; s < StackPerThread; s++)
+		for (unsigned int TotalStep = 1; TotalStep < TotalStepMax; TotalStep++)
 		{
-			try { FiberLoad(Slice[s + s0], TotalStep); }
-			catch (FailureReport_t)
+			//printf("thread %u Start Tstep%u\n", thread, TotalStep);
+			for (auto s = 0; s < StackPerThread; s++)
 			{
-
+				FiberLoad(Slice[s + s0], TotalStep);
 			}
-		}
-		std::unique_lock<std::mutex> lock(this->mtx);
-		this->Finish++;
-		//printf("thread %u Finished TStep %u,Waiting for sync\n", thread, TotalStep);
-		cvm.notify_one();	
+			std::unique_lock<std::mutex> lock(this->mtx);
+			this->Finish++;
+			//printf("thread %u Finished TStep %u,Waiting for sync\n", thread, TotalStep);
+			cvm.notify_one();
 
-		cv.wait(lock, [&] {return TotalStep == this->SyncTotalStep - 1; });
+			cv.wait(lock, [&] {return TotalStep == this->SyncTotalStep - 1; });
+		}
+	}
+	catch (FailureReport_t)
+	{
+		//this.failurereport = report
 	}
 
 }
