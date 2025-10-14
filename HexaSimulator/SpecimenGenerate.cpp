@@ -24,6 +24,7 @@ void TestPiece_t::ParametersCopying(TestPieceInit_t Init)
 	LoadPercent = new unsigned int[LoadStepMax];
 	for (auto s = 0; s < LoadStepMax; s++) LoadPercent[s] = Init.LoadPercent[s];
 	MaxLoad = Init.MaxLoad;
+	CrackShape = Init.CrackShape;
 }
 void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 {
@@ -54,6 +55,7 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 		HexaInit->Cm[i] = Init.Cm[i];
 		HexaInit->Mm[i] = Init.Mm[i];
 	}
+	HexaInit->CrackShape = Init.CrackShape;
 }
 Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 {

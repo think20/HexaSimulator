@@ -37,7 +37,6 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 
 		cvm.wait(lock, [&] {return this->Finish == ThreadMax; });
 
-
 		for (auto t = 0; t < ThreadMax; t++)
 		{
 			if (FailureReport[t] != nullptr)
@@ -382,12 +381,10 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
 
 		double Req = sqrtl(Slice->NodeCount * R0 * R0 / Vf);
-#ifdef CrackModel
-		Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
-#endif
-#ifdef SideCrackModel
-		Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);
-#endif
+		if(CrackShape==CentralCrack)
+			Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
+		else if(CrackShape==SideCrack)
+			Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);
 	}
 
 	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
@@ -419,10 +416,16 @@ void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsi
 		*/
 	if (LoadRatio > MaxLoadRatio)
 	{
-		printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice->Slice, LoadCycle, LoadStep, double(Slice->Capablity / Slice->NodeCount) * EM6, double(Load) * EM6, double(CompositeLoad) * EM6);
+		/*printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice->Slice, LoadCycle, LoadStep, double(Slice->Capablity / Slice->NodeCount) * EM6, double(Load) * EM6, double(CompositeLoad) * EM6);
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
-		system("pause");
+		system("pause");*/
+
+		double CrackLen = 0;
+		if (Slice->Crack != nullptr) CrackLen = Slice->Crack->Len();
+		if (Slice->SideCrack != nullptr) CrackLen = Slice->SideCrack->Len();
+
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
 	}
 }
 double TestPiece_t::FindFiberLoadBaseline(Slice_t* Slice)

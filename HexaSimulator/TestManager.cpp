@@ -2,10 +2,13 @@
 #include "TestManager.h"
 
 #include <cstring>
+#include <thread>
 
 void TestManager_t::CreateTests()
 {
 	InputManager->GetTestContent();
+
+	//Two testpieces are assembled from each test setup with different crack shape
 	for (unsigned int t = 0; t < TestCount; t++)
 		AssembleTestPiece(t);
 }
@@ -14,10 +17,28 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto Result = TestPiece[t]->FiberLoadP(10'0000);
+		auto ResultC = TestPiece[t]->FiberLoadP(100'0000);
+		Report[t] = new FailureReport_t(ResultC);
+
+		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(100'0000);
+		Report[t + TestCount] = new FailureReport_t(ResultS);
 		printf("Complete!\n");
 	}
-		
+}
+void TestManager_t::SaveResults()
+{
+	std::string DirS(Dir);
+	std::string GeneralResultS(GeneralResult);
+
+	FOut = fopen((DirS + GeneralResultS).c_str(), "w");
+
+	fprintf(FOut, "Exp,C,S\n");
+	for (unsigned int t = 0; t < TestCount; t++)
+	{
+		fprintf(FOut, "%u,%u,%u,\n", Test[t]->DesiredLife, Report[t]->Cycle, Report[t + TestCount]->Cycle);
+	}
+
+	fclose(FOut);
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -71,7 +92,11 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->KLow = NowMatrix->KLow;
 	NowInit->KIC = NowMatrix->KIC;
 
+	NowInit->CrackShape = CentralCrack;
 	TestPiece[TestID] = new TestPiece_t(*NowInit);
+
+	NowInit->CrackShape = SideCrack;
+	TestPiece[TestID + TestCount] = new TestPiece_t(*NowInit);
 	//printf("TestManager:FiberStrength:%.2lfMPa\n", NowInit->Sigma0 * EM6);
 }
 void TestManager_t::InputManager_t::GetTestContent()
@@ -359,7 +384,8 @@ TestManager_t::TestManager_t()
 	Spectra = new Spectra_t* [MaxSpectraType];
 	Composite = new Composite_t* [MaxCompositeType];
 	Matrix = new Matrix_t* [MaxMatrixType];
-	Fiber = new Fiber_t * [MaxFiberType];
+	Fiber = new Fiber_t* [MaxFiberType];
+	Report = new FailureReport_t* [MaxTestType];
 
 	InputManager = new TestManager_t::InputManager_t(this);
 }

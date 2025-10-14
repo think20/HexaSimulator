@@ -2,8 +2,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <cmath>
 
-#define CrackModel true
-
 constexpr double E3 = 1000;
 constexpr double E6 = 1000 * E3;
 constexpr double E9 = 1000 * E6;
@@ -19,6 +17,11 @@ constexpr unsigned int ThreadMax = 4; //for Laptop
 constexpr unsigned int SlicesMax = 16;//put here so both Crack.h and Hexa.h can see
 
 constexpr double Tolerance = E3;
+
+constexpr unsigned int CentralCrack = 0;
+constexpr unsigned int SideCrack = 1;
+
+constexpr char Version[] = "20251014v1";
 
 // Reaction Layer damage and following fiber damage should be added, 1400MPa
 

@@ -64,6 +64,7 @@ public:
 	double mf, Sigma0, L, Lg;
 	double StrengthDecay, ScatterDecay;
 	double SlidingStrength0;
+	unsigned int CrackShape;
 
 	double InitCrackRadious;
 	double Em, Ef, Vm;
@@ -105,6 +106,7 @@ private:
 	double Vf;
 	double mf, SigmaL;
 	double SlidingStrength0;
+	unsigned int CrackShape;
 	CrackManagerInit_t* CrackManagerInit;
 };
 

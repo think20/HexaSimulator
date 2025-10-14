@@ -19,6 +19,7 @@ int main()
 	auto TestManager = new TestManager_t;
 	TestManager->CreateTests();
 	TestManager->StartTests();
+	TestManager->SaveResults();
 	//auto Hexa = new Hexa_t;
 
 	//printf("%.2lf\n", sin(6.28));

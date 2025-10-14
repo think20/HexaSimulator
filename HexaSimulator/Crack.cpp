@@ -132,6 +132,10 @@ double SideCrack_t::DistanceToCrackFront(double x, double y)
 
 	return ((y - k0 * x - b0) * sqrt(1 / (k0 * k0 + 1)));
 }
+double SideCrack_t::Len()
+{
+	return b;
+}
 void Crack_t::ParametersCopying(CrackInit_t Init)
 {
 	Em = Init.Em;

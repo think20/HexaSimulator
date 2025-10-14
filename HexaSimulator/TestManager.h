@@ -4,11 +4,12 @@
 
 #include <cstdio>
 
+
 constexpr unsigned int MaxFiberType = 4;
 constexpr unsigned int MaxMatrixType = 8;
 constexpr unsigned int MaxCompositeType = 16;
 constexpr unsigned int MaxSpectraType = 4;
-constexpr unsigned int MaxTestType = 32;
+constexpr unsigned int MaxTestType = 64;
 constexpr unsigned int MaxTestPiece = MaxTestType;
 constexpr unsigned int MaxRecordCount = 128;
 constexpr unsigned int MaxRecordLen = 256;
@@ -21,6 +22,7 @@ constexpr char Dir[] = "C:\\Users\\12155\\Source\\repos\\think20\\HexaSimulator\
 //constexpr char Dir[] = "C:\\Users\\12155\\source\\repos\\HexaSimulator\\HexaSimulator\\";
 
 constexpr char TestData[] = "TestDataC.csv";
+constexpr char GeneralResult[] = "Result.csv";
 
 class Fiber_t
 {
@@ -76,7 +78,7 @@ public:
 
 	void CreateTests();
 	void StartTests();
-	//void DisplayResults();
+	void SaveResults();
 
 private:
 	void AssembleTestPiece(unsigned int);
@@ -102,6 +104,7 @@ private:
 		unsigned int Record;
 
 		FILE* FIn;
+
 		TestManager_t* TestManager;
 	};
 
@@ -114,6 +117,9 @@ private:
 	Composite_t** Composite;
 	Matrix_t** Matrix;
 	Fiber_t** Fiber;
+	FailureReport_t** Report;
+
+	FILE* FOut;
 
 	unsigned int TestCount, SpectraCount, CompositeTypeCount, MatrixTypeCount, FiberTypeCount;
 };

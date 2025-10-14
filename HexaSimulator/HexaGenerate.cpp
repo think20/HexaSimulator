@@ -192,12 +192,10 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 	if (Slice == 0)
 	{
 		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
-#ifdef CrackModel
+	if(CrackShape == CentralCrack)
 		CrackManager->CreateCrack(Req, Slice);
-#endif
-#ifdef SideCrackModel
+	else if(CrackShape == SideCrack)
 		CrackManager->CreateSideCrack(Slice);
-#endif
 	}
 		
 }
@@ -250,6 +248,8 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	mf = Init.mf * Init.ScatterDecay;
 	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);
 	SlidingStrength0 = Init.SlidingStrength0;
+
+	CrackShape = Init.CrackShape;
 
 	//printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
 }

@@ -56,6 +56,8 @@ public:
 	unsigned int* LoadPercent;
 	double MaxLoad;
 
+	unsigned int CrackShape;
+
 	double mf, Sigma0, Lg;
 	double StrengthDecay, ScatterDecay;
 	double SlidingStrength0;
@@ -128,6 +130,8 @@ private:
 	FailureReport_t** FailureReport;
 	bool HasResult;
 	FailureReport_t* Result;
+
+	unsigned int CrackShape;
 };
 class PlanePos_t
 {

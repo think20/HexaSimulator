@@ -62,6 +62,7 @@ public:
 	SideCrack_t(double, double, double, double, SideCrackInit_t);
 	double UpdateCrack(double);
 	double DistanceToCrackFront(double, double);
+	double Len();
 	double S;
 	double MaxCrackLen;
 private:
