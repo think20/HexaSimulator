@@ -8,7 +8,7 @@
 #include <random>
 #include <queue>
 
-void TestPiece_t::FiberLoadP(unsigned int CycleMax)
+FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 {
 	auto TotalStepMax = CycleMax * LoadStepMax;
 	unsigned int LoadStep = 0;
@@ -23,7 +23,7 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 	while (this->SyncTotalStep < TotalStepMax)
 	{
 		auto Cycle = SyncTotalStep %(100* LoadStepMax);
-		if (Cycle == 0) printf("TestPiece:Cycle%d\n", SyncTotalStep/LoadStepMax);
+		//if (Cycle == 0) printf("TestPiece:Cycle%d\n", SyncTotalStep/LoadStepMax);
 
 		LoadStep = SyncTotalStep % LoadStepMax;
 		LoadCycle = SyncTotalStep / LoadStepMax;
@@ -38,8 +38,17 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		cvm.wait(lock, [&] {return this->Finish == ThreadMax; });
 
 
-		for(;;){}//seek
-		if (1 == 1) break;
+		for (auto t = 0; t < ThreadMax; t++)
+		{
+			if (FailureReport[t] != nullptr)
+			{
+				HasResult = true;
+				Result = FailureReport[t];
+				break;
+			}
+		}
+		
+		if (HasResult) break;
 
 		this->SyncTotalStep++;
 		this->Finish = 0;
@@ -50,6 +59,7 @@ void TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		//now unique_lock destructs, mtx unlocked
 	}
 
+	if (HasResult) return(*Result);
 }
 void TestPiece_t::SyncLoadDistibute(unsigned int LoadStep, unsigned int LoadCycle)
 {
@@ -86,7 +96,9 @@ void TestPiece_t::FibersLoad(unsigned int thread, unsigned int TotalStepMax)
 	{
 		//this.failurereport = report
 		//printf("%d,%d\n", Report.Slice, Report.Cycle);
-		FailureReport[thread] = &Report;
+
+		//Force Deep Copying.Report destructs exiting this function.
+		FailureReport[thread] = new FailureReport_t(Report);
 
 		//printf("%d,%d\n", FailureReport[thread]->Slice, FailureReport[thread]->Cycle);
 
@@ -298,7 +310,8 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor); // Far field load, not local
 	if (CrackLen > SideCrack->MaxCrackLen)
 	{
-		printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, CrackLen * E3);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		/*printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, CrackLen * E3);
 		for (unsigned int s = 0; s < SlicesMax; s++)
 			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
 		//printf("Debug Matrix LoadFactor:%.2lf,Fiber LoadFactor:%.2lf\n", SideCrack->Yb, SliceFiberLoadFactor);
@@ -310,7 +323,7 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 				printf("%d,%d\n", int((*Node)->x * E6), int((*Node)->y * E6));
 			}
 		}
-		system("pause");
+		system("pause");*/
 	}
 
 	double FullCompositeArea = pi * SpecimenRadious * SpecimenRadious;

@@ -71,7 +71,7 @@ class TestPiece_t
 	friend class FailureReport_t;
 public:
 	TestPiece_t(TestPieceInit_t Init);
-	void FiberLoadP(unsigned int);
+	FailureReport_t FiberLoadP(unsigned int);
 
 private:
 	void SyncLoadDistibute(unsigned int, unsigned int);
@@ -126,6 +126,8 @@ private:
 	HexaInit_t* HexaInit;
 
 	FailureReport_t** FailureReport;
+	bool HasResult;
+	FailureReport_t* Result;
 };
 class PlanePos_t
 {

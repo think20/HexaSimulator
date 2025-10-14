@@ -11,7 +11,13 @@ void TestManager_t::CreateTests()
 }
 void TestManager_t::StartTests()
 {
-	TestPiece[4]->FiberLoadP(10'0000);
+	for (unsigned int t = 0; t < TestCount; t++)
+	{
+		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
+		auto Result = TestPiece[t]->FiberLoadP(10'0000);
+		printf("Complete!\n");
+	}
+		
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {

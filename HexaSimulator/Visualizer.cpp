@@ -12,7 +12,6 @@ constexpr unsigned int PicSize = SpecimenRadious * 1000 * 100 * 2;
 void SavePic(Node_t** Nodes,unsigned int const& NodeCount)
 {
 	
-
 	uchar(*Pic)[PicSize + 3] = new uchar[PicSize + 3][PicSize + 3];
 	unsigned int PaintX = 0;
 	unsigned int PaintY = 0;

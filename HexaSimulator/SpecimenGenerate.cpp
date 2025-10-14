@@ -108,4 +108,7 @@ TestPiece_t::TestPiece_t(TestPieceInit_t Init)
 	this->FailureReport = new FailureReport_t * [ThreadMax];
 	for (unsigned int t = 0; t < ThreadMax; t++)
 		FailureReport[t] = nullptr;
+
+	HasResult = false;
+	Result = nullptr;
 }
