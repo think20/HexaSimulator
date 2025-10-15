@@ -17,10 +17,10 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto ResultC = TestPiece[t]->FiberLoadP(100'0000);
+		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
 		Report[t] = new FailureReport_t(ResultC);
 
-		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(100'0000);
+		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
 		Report[t + TestCount] = new FailureReport_t(ResultS);
 		printf("Complete!\n");
 	}

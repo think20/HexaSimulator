@@ -35,7 +35,10 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		//this->SyncLoadDistibute(LoadStep, LoadCycle);
 		//printf("Sync Finish\n");
 
-		cvm.wait(lock, [&] {return this->Finish == ThreadMax; });
+		cvm.wait_for(lock,std::chrono::seconds(1), [&] {return this->Finish == ThreadMax; });
+		
+
+		//printf("TestPiece:SyncTotalStep %u\n", this->SyncTotalStep);
 
 		for (auto t = 0; t < ThreadMax; t++)
 		{
@@ -59,6 +62,7 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 	}
 
 	if (HasResult) return(*Result);
+	else return(FailureReport_t(0, MaxCycle, 0, this));
 }
 void TestPiece_t::SyncLoadDistibute(unsigned int LoadStep, unsigned int LoadCycle)
 {

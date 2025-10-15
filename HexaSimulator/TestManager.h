@@ -6,12 +6,12 @@
 
 
 constexpr unsigned int MaxFiberType = 4;
-constexpr unsigned int MaxMatrixType = 8;
-constexpr unsigned int MaxCompositeType = 16;
+constexpr unsigned int MaxMatrixType = 32;
+constexpr unsigned int MaxCompositeType = 32;
 constexpr unsigned int MaxSpectraType = 4;
-constexpr unsigned int MaxTestType = 64;
+constexpr unsigned int MaxTestType = 128;
 constexpr unsigned int MaxTestPiece = MaxTestType;
-constexpr unsigned int MaxRecordCount = 128;
+constexpr unsigned int MaxRecordCount = 256;
 constexpr unsigned int MaxRecordLen = 256;
 constexpr unsigned int MaxNameLen = 32;
 

@@ -21,7 +21,8 @@ constexpr double Tolerance = E3;
 constexpr unsigned int CentralCrack = 0;
 constexpr unsigned int SideCrack = 1;
 
-constexpr char Version[] = "20251014v1";
+constexpr unsigned int MaxCycle = 500'0000;
+constexpr char Version[] = "20251015v1";
 
 // Reaction Layer damage and following fiber damage should be added, 1400MPa
 
