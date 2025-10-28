@@ -4,9 +4,9 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
-constexpr unsigned int LLSIMax = 3;
-constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2,1 };
-constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax - 1)) * (LLSIMax - 1) / 2 * 6;
+constexpr unsigned int LLSIMax = 1;
+constexpr double LLSFactor[LLSIMax + 1] = { 0,1 };
+constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 constexpr double MaxLoadRatio = 0.95;
 constexpr double FiberOverloadFactor = 100; // by trial,100~1000
@@ -28,6 +28,7 @@ public:
 	unsigned int NodeCount;
 	int64_t Capablity;
 	Crack_t* Crack;
+	RectSideCrack_t* RectSideCrack;
 	SideCrack_t* SideCrack;
 
 	Hexa_t* Hexa;
@@ -44,7 +45,7 @@ public:
 class TestPieceInit_t
 {
 public:
-	double R0, L, SpecimenRadious;
+	double R0, L, SpecimenRadious, X0, Y0;
 
 	double Vm, Vf, Em, Ef;
 
@@ -58,6 +59,7 @@ public:
 
 	unsigned int CrackShape;
 
+	bool Rect;
 	double mf, Sigma0, Lg;
 	double StrengthDecay, ScatterDecay;
 	double SlidingStrength0;
@@ -88,6 +90,7 @@ private:
 	void UpdateMaxStress();
 
 	void CrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
+	void RectSideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void SideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
@@ -95,6 +98,7 @@ private:
 	void SetFiberMinimumStress(Slice_t*, Slice_t*);
 
 	double FindFiberLoadBaselineWithCrack(Slice_t*);
+	double FindFiberLoadBaselineWithRectSideCrack(Slice_t*);
 	double FindFiberLoadBaselineWithSideCrack(Slice_t*);
 
 	void FindNeighbors(Slice_t*);
@@ -114,7 +118,7 @@ private:
 	bool Ready;
 	unsigned int SyncTotalStep;
 
-	double R0, L, SpecimenRadious;
+	double R0, L, SpecimenRadious, X0, Y0;
 
 	double Vm, Vf, Em, Ef;
 	double FiberLoadFactor, MatrixLoadFactor;

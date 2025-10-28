@@ -5,6 +5,8 @@ void TestPiece_t::ParametersCopying(TestPieceInit_t Init)
 	R0 = Init.R0;
 	L = Init.L;
 	SpecimenRadious = Init.SpecimenRadious;
+	X0 = Init.X0;
+	Y0 = Init.Y0;
 	Vm = Init.Vm;
 	Vf = Init.Vf;
 	Em = Init.Em;
@@ -31,6 +33,9 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit = new HexaInit_t;
 	HexaInit->R0 = Init.R0;
 	HexaInit->SpecimenRadious = Init.SpecimenRadious;
+	HexaInit->Rect = Init.Rect;
+	HexaInit->X0 = Init.X0;
+	HexaInit->Y0 = Init.Y0;
 	HexaInit->Vf = Init.Vf;
 	HexaInit->mf = Init.mf;
 	HexaInit->Sigma0 = Init.Sigma0;
@@ -69,6 +74,7 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 	}
 	this->Capablity = Hexa->Capablity[Slice];
 	this->Crack = Hexa->CrackManager->Crack[Slice];
+	this->RectSideCrack = Hexa->CrackManager->RectSideCrack[Slice];
 	this->SideCrack = Hexa->CrackManager->SideCrack[Slice];
 	this->NodeCount = Hexa->NodeCount[Slice];
 

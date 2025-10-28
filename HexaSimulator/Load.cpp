@@ -128,8 +128,10 @@ void TestPiece_t::FiberLoad(Slice_t* Slice, unsigned int TotalStep)
 void TestPiece_t::LoadDistribute(Slice_t* Slice,unsigned int LoadStep,unsigned int LoadCycle)
 {
 	auto& Crack = Slice->Crack;
+	auto& RectSideCrack = Slice->RectSideCrack;
 	auto& SideCrack = Slice->SideCrack;
-	if (Crack != nullptr)  CrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle); 
+	if (Crack != nullptr)  CrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
+	else if (RectSideCrack != nullptr) RectSideCrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
 	else if (SideCrack != nullptr) SideCrackPlaneLoadDistribute(Slice, LoadStep, LoadCycle);
 	else NonCrackLoadDistribute(Slice, LoadStep, LoadCycle);
 
@@ -302,6 +304,52 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 	}
 
 }
+void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
+{
+	double SliceFiberLoadFactor = FiberLoadFactor; //default
+	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
+
+	auto& RectSideCrack = Slice->RectSideCrack;
+
+	double CrackLen = RectSideCrack->UpdateCrack(double(CompositeLoad));
+
+
+	if (CrackLen > RectSideCrack->MaxCrackLen)
+	{
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+	}
+	if (RectSideCrack->Yield)
+	{
+		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
+		double MatrixForce = Vm * pi * (SpecimenRadious * SpecimenRadious - CrackLen * CrackLen) * SigmamMax;
+		double FiberForce = CompositeForce - MatrixForce;
+		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
+		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+	}
+	else SliceFiberLoadFactor == RectSideCrack->Yb * Ef / Em;
+
+	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
+
+	double BaseLine = FindFiberLoadBaseline(Slice);
+	SliceFiberLoadFactor *= BaseLine;
+	int64_t Load = int64_t(CompositeLoad * SliceFiberLoadFactor);
+
+	double Len = RectSideCrack->Len();
+
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+
+		auto& r = (*Node)->r;
+		double Factor = 1;//default, Fiber not in RectSideCrack
+
+		if (r < Len)
+			Factor = FiberOverloadFactor * sqrtl((Len - r));
+
+		(*Node)->Load = int64_t(Load * Factor);
+
+		//Load = k*u^1/2
+	}
+}
 void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
 {
 	double SliceFiberLoadFactor = FiberLoadFactor; //default
@@ -385,8 +433,10 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
 
 		double Req = sqrtl(Slice->NodeCount * R0 * R0 / Vf);
-		if(CrackShape==CentralCrack)
+		if (CrackShape == CentralCrack)
 			Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
+		else if (CrackShape == RectSideCrack)
+			Slice->RectSideCrack = Hexa->CrackManager->CreateRectSideCrack(X0, Slice->Slice);
 		else if(CrackShape==SideCrack)
 			Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);
 	}
@@ -427,6 +477,7 @@ void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsi
 
 		double CrackLen = 0;
 		if (Slice->Crack != nullptr) CrackLen = Slice->Crack->Len();
+		if (Slice->RectSideCrack != nullptr) CrackLen = Slice->RectSideCrack->Len();
 		if (Slice->SideCrack != nullptr) CrackLen = Slice->SideCrack->Len();
 
 		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
@@ -435,6 +486,7 @@ void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsi
 double TestPiece_t::FindFiberLoadBaseline(Slice_t* Slice)
 {
 	if (Slice->Crack != nullptr) return FindFiberLoadBaselineWithCrack(Slice);
+	else if (Slice->RectSideCrack != nullptr) return FindFiberLoadBaselineWithRectSideCrack(Slice);
 	else if (Slice->SideCrack != nullptr) return FindFiberLoadBaselineWithSideCrack(Slice);
 }
 void TestPiece_t::SetFiberMinimumStress(Slice_t* LoadedSlice, Slice_t* NotLoadedSlice)
@@ -510,7 +562,28 @@ double TestPiece_t::FindFiberLoadBaselineWithCrack(Slice_t* Slice)
 	double BaseLine = double(Slice->NodeCount) / TotalFactor;
 	return BaseLine;
 }
+double TestPiece_t::FindFiberLoadBaselineWithRectSideCrack(Slice_t* Slice)
+{
+	auto& RectSideCrack = Slice->RectSideCrack;
+	double Len = RectSideCrack->Len();
 
+
+	double TotalFactor = 0;
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+
+		auto& x = (*Node)->x;
+
+		double Factor = 1;//default, Fiber not in RectSideCrack
+
+		if (x < Len)
+			Factor = 1 + FiberOverloadFactor * sqrtl((Len - x));
+
+		TotalFactor += Factor;
+	}
+	double BaseLine = double(Slice->NodeCount) / TotalFactor;
+	return BaseLine;
+}
 double TestPiece_t::FindFiberLoadBaselineWithSideCrack(Slice_t* Slice)
 {
 	auto& SideCrack = Slice->SideCrack;

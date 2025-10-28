@@ -59,7 +59,8 @@ public:
 class HexaInit_t
 {
 public:
-	double R0, SpecimenRadious;
+	double R0, SpecimenRadious, X0, Y0;
+	bool Rect;
 	double Vf;
 	double mf, Sigma0, L, Lg;
 	double StrengthDecay, ScatterDecay;
@@ -107,6 +108,8 @@ private:
 	double mf, SigmaL;
 	double SlidingStrength0;
 	unsigned int CrackShape;
+	bool Rect;
+	double X0, Y0;
 	CrackManagerInit_t* CrackManagerInit;
 };
 

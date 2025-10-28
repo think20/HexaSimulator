@@ -119,7 +119,14 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 			if (NodeNow->r > SpecimenRadious- R1) NodeNow->OverBoarder = true;
 
 			NodeNow->FiberHealth = FiberHealthMax;*/
-			if (NodeNow->r > SpecimenRadious - R1) NodeNow->OverBoarder = true;
+
+			auto Overboarder = [&]{
+				if (!Rect) return (NodeNow->r > SpecimenRadious - R1);
+				else return((NodeNow->x < 0 + R1) || (NodeNow->x > X0 - R1) || (NodeNow->y < 0 + R1) || (NodeNow->y > Y0 - R1));
+				};
+
+
+			if (Overboarder()) NodeNow->OverBoarder = true;
 			else (NodeCount[Slice])++;
 		}
 	}
@@ -192,10 +199,12 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 	if (Slice == 0)
 	{
 		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
-	if(CrackShape == CentralCrack)
-		CrackManager->CreateCrack(Req, Slice);
-	else if(CrackShape == SideCrack)
-		CrackManager->CreateSideCrack(Slice);
+		if (CrackShape == CentralCrack)
+			CrackManager->CreateCrack(Req, Slice);
+		else if (CrackShape == RectSideCrack)
+			CrackManager->CreateRectSideCrack(X0, Slice);
+		else if(CrackShape == SideCrack)
+			CrackManager->CreateSideCrack(Slice);
 	}
 		
 }
@@ -244,6 +253,9 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	R0 = Init.R0;
 	R1 = sqrt(pi / (2 * sqrt(3) * Init.Vf)) * R0;
 	SpecimenRadious = Init.SpecimenRadious;
+	Rect = Init.Rect;
+	X0 = Init.X0;
+	Y0 = Init.Y0;
 	Vf = Init.Vf;
 	mf = Init.mf * Init.ScatterDecay;
 	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);

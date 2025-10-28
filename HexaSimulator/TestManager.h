@@ -46,7 +46,8 @@ class Composite_t
 public:
 	unsigned int ID;
 	char* CompositeName;
-	double Vf, OffsetK, OffsetB, SpecimenRadious;
+	bool Rect;
+	double Vf, OffsetK, OffsetB, SpecimenRadious, X0, Y0;
 	unsigned int FiberID, MatrixID;
 	double SlidingStrength0;
 	double DeltaT, dint;

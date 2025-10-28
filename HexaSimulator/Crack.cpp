@@ -25,7 +25,7 @@ double const& Crack_t::UpdateCrack(double Sigma)
 	//printf("Crack:a %lf\n", a);
 
 	if (not(Sigmab > Sigmab0)) return a;
-	
+	 
 	//printf("Crack:Propgated!\n");
 
 	double deltaKb = (Sigmab-Sigmab0) * sqrtl(pi * a) * EM6;// MPa/m^1/2
@@ -54,6 +54,51 @@ double const& Crack_t::UpdateCrack(double Sigma)
 	return a;
 }
 double const& Crack_t::Len()
+{
+	return a;
+}
+
+double RectSideCrack_t::UpdateCrack(double Sigma)
+{
+	double Sigmab0 = Sigmab; //Last Sigmab
+
+	Yb = Em * X / (a * Em * (Vf - 1) + X * (Em + Ef * Vf - Em * Vf));
+	Sigmab = Yb * Sigma;
+
+	if (Sigmab > SigmamMax)
+	{
+		Sigmab = SigmamMax;
+		Yield = true;
+	}
+	else Yield = false;
+
+	if (not(Sigmab > Sigmab0)) return a;
+
+	double deltaKb = (Sigmab - Sigmab0) * sqrtl(pi * a) * EM6;// MPa/m^1/2
+	double Kb = Sigmab * sqrtl(pi * a) * EM6;
+
+	if (Kb > KIC)
+	{
+		a = MaxCrackLen + 1 * EM6;
+		return a;
+	}
+
+	double Cb = Cm[0];
+	double Mb = Mm[0];
+
+	if (deltaKb > KLow)
+	{
+		Cb = Cm[1];
+		Mb = Mm[1];
+	}
+	double dadn = Cb * powl(deltaKb, Mb);//m
+
+
+	a += dadn;
+
+	return a;
+}
+double RectSideCrack_t::Len()
 {
 	return a;
 }
@@ -164,6 +209,34 @@ Crack_t::Crack_t(double a0, double R, CrackInit_t Init)
 	a = a0;
 	Req = R;
 }
+void RectSideCrack_t::ParametersCopying(RectSideCrackInit_t Init)
+{
+	Em = Init.Em;
+	Ef = Init.Ef;
+	Vm = Init.Vm;
+	Vf = Init.Vf;
+	SigmamMax = Init.SigmamMax;
+	KLow = Init.KLow;
+	KIC = Init.KIC;
+	Cm = new double[2];
+	Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		Cm[i] = Init.Cm[i];
+		Mm[i] = Init.Mm[i];
+	}
+}
+RectSideCrack_t::RectSideCrack_t(double a0, double X0, RectSideCrackInit_t Init)
+{
+	ParametersCopying(Init);
+
+	Yb = 0;
+	Yield = false;
+	MaxCrackLen = 0.99 * X0;
+	Sigmab = 0;
+	a = a0;
+	X = X0;
+}
 void SideCrack_t::ParametersCopying(SideCrackInit_t Init)
 {
 	KLow = Init.KLow;
@@ -216,6 +289,24 @@ void CrackManager_t::CrackInitReady(CrackManagerInit_t Init)
 		CrackInit->Mm[i] = Init.Mm[i];
 	}
 }
+void CrackManager_t::RectSideCrackInitReady(CrackManagerInit_t Init)
+{
+	RectSideCrackInit = new RectSideCrackInit_t;
+	RectSideCrackInit->Em = Init.Em;
+	RectSideCrackInit->Ef = Init.Ef;
+	RectSideCrackInit->Vm = Init.Vm;
+	RectSideCrackInit->Vf = Init.Vf;
+	RectSideCrackInit->SigmamMax = Init.SigmamMax;
+	RectSideCrackInit->KLow = Init.KLow;
+	RectSideCrackInit->KIC = Init.KIC;
+	RectSideCrackInit->Cm = new double[2];
+	RectSideCrackInit->Mm = new double[2];
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		RectSideCrackInit->Cm[i] = Init.Cm[i];
+		RectSideCrackInit->Mm[i] = Init.Mm[i];
+	}
+}
 void CrackManager_t::SideCrackInitReady(CrackManagerInit_t Init)
 {
 	SideCrackInit = new SideCrackInit_t;
@@ -233,14 +324,17 @@ CrackManager_t::CrackManager_t(CrackManagerInit_t Init)
 {
 	ParametersCopying(Init);
 	CrackInitReady(Init);
+	RectSideCrackInitReady(Init);
 	SideCrackInitReady(Init);
 
 	this->Crack = new Crack_t* [MaxCrackCount];
+	this->RectSideCrack = new RectSideCrack_t* [MaxCrackCount];
 	this->SideCrack = new SideCrack_t* [MaxSideCrackCount];
 
 	for (auto s = 0; s < MaxCrackCount; s++)
 	{
 		Crack[s] = nullptr;
+		RectSideCrack[s] = nullptr;
 		SideCrack[s] = nullptr;
 	}
 
@@ -253,6 +347,13 @@ Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
 	Crack[Slice] = NewCrack;
 	//printf("CrackManager: Created Crack with InitRadious:%.2lfum\n", InitCrackRadious * E6);
 	return NewCrack;
+}
+RectSideCrack_t* CrackManager_t::CreateRectSideCrack(double X, unsigned int Slice)
+{
+	auto NewRectSideCrack = new RectSideCrack_t(InitCrackRadious, X, *RectSideCrackInit);
+	RectSideCrack[Slice] = NewRectSideCrack;
+	//printf("CrackManager: Created Crack with InitRadious:%.2lfum\n", InitCrackRadious * E6);
+	return NewRectSideCrack;
 }
 SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
 {
