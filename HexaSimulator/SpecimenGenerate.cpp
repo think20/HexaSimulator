@@ -70,7 +70,12 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 	for (unsigned int Index = 1; Index < NodeMax; Index++)
 	{
 		auto& Node = Hexa->Nodes[Slice][Index];
-		if (!Node->OverBoarder) Nodes->Push(Node);
+		if (!Node->OverBoarder)
+		{
+			Nodes->Push(Node);
+			//if(Slice==0)
+				//printf("Slice:x=%.2lf\n", Node->x * E6);
+		}
 	}
 	this->Capablity = Hexa->Capablity[Slice];
 	this->Crack = Hexa->CrackManager->Crack[Slice];

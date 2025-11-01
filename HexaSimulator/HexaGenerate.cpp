@@ -20,8 +20,8 @@ void Hexa_t::HexaGenerateP()
 
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
 
-	/*for (unsigned int s = 0; s < SlicesMax; s++)
-		printf("Hexa:Generated Slice %d with %d Nodes!\n", s, this->NodeCount[s]);*/
+	//for (unsigned int s = 0; s < SlicesMax; s++)
+		//printf("Hexa:Generated Slice 0 with %d Nodes!\n",  this->NodeCount[0]);
 	return;
 }
 void Hexa_t::HexasGenerate(unsigned int s0)
@@ -121,8 +121,9 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 			NodeNow->FiberHealth = FiberHealthMax;*/
 
 			auto Overboarder = [&]{
+				//if (Slice == 0) printf("Hexa:x=%.2lf,y=%.2lf,X0=%.2lf,Y0=%.2lf,R1=%.2lf\n", NodeNow->x * E6, NodeNow->y * E6, X0 * E6, Y0 * E6, R1 * E6);
 				if (!Rect) return (NodeNow->r > SpecimenRadious - R1);
-				else return((NodeNow->x < 0 + R1) || (NodeNow->x > X0 - R1) || (NodeNow->y < 0 + R1) || (NodeNow->y > Y0 - R1));
+				else return((NodeNow->x < -X0/2 + R1) || (NodeNow->x > X0/2 - R1) || (NodeNow->y < -Y0/2 + R1) || (NodeNow->y > Y0/2 - R1));
 				};
 
 
@@ -152,7 +153,11 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 		else 
 			NodeNow->OffsetDamageFactor = ((NodeNow->OffsetAngle - ThetaThresh) * OffsetFactor) / 100 + 1;
 			*/
-		if (NodeNow->r > SpecimenRadious - R1) NodeNow->OverBoarder = true;
+		auto Overboarder = [&] {
+			if (!Rect) return (NodeNow->r > SpecimenRadious - R1);
+			else return((NodeNow->x < -X0 / 2 + R1) || (NodeNow->x > X0 / 2 - R1) || (NodeNow->y < -Y0 / 2 + R1) || (NodeNow->y > Y0 / 2 - R1));
+			};
+		if (Overboarder()) NodeNow->OverBoarder = true;
 		else (NodeCount[Slice])++;
 	}
 }
@@ -189,7 +194,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		Convert23(Layer, Order, Edge, Node);
 
 		NodeNow->Strength = int64_t(FiberStrength(Seed));
-		//printf("Strength:%lld\n", NodeNow->Strength/1000'000);
+		//printf("Hexa:Strength:%lld\n", NodeNow->Strength/1000'000);
 		NodeNow->MinStress = 0;
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;

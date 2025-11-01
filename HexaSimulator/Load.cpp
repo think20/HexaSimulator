@@ -339,11 +339,11 @@ void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int 
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
 
-		auto& r = (*Node)->r;
+		auto& x = (*Node)->x;
 		double Factor = 1;//default, Fiber not in RectSideCrack
 
-		if (r < Len)
-			Factor = FiberOverloadFactor * sqrtl((Len - r));
+		if (x < Len - X0 / 2)
+			Factor = 1 + FiberOverloadFactor * sqrtl((Len - X0 / 2 - x));
 
 		(*Node)->Load = int64_t(Load * Factor);
 
@@ -450,7 +450,7 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 
 		if ((*Node)->Load < (*Node)->MinStress)
 		{
-			printf("Node:%d LoadUpscale due to neighbor Slice,from %lld to %lld,Cap %lld at Step:%d,Cyc:%d\n", (*Node)->Index, (*Node)->Load * EM6, (*Node)->MinStress * EM6, (*Node)->Strength * EM6, LoadStep, LoadCycle);
+			//printf("TestPiece:Node:%d LoadUpscale due to neighbor Slice,from %lld to %lld,Cap %lld at Step:%d,Cyc:%d\n", (*Node)->Index, (*Node)->Load * EM6, (*Node)->MinStress * EM6, (*Node)->Strength * EM6, LoadStep, LoadCycle);
 			(*Node)->Load = (*Node)->MinStress;
 		}
 			
@@ -517,6 +517,7 @@ void TestPiece_t::FindNeighbors(Slice_t* Slice)
 		auto const& Neighbor = Node->Neighbors[n];
 
 		auto Discard = [&] {
+			if (Neighbor->OverBoarder) return true;
 			if (Neighbor->Load >= Neighbor->MaxStress) return true;
 			if (Slice->Visited[Neighbor->Index] == Slice->Visited[Node->Index]) return true;
 			return false;
@@ -576,8 +577,8 @@ double TestPiece_t::FindFiberLoadBaselineWithRectSideCrack(Slice_t* Slice)
 
 		double Factor = 1;//default, Fiber not in RectSideCrack
 
-		if (x < Len)
-			Factor = 1 + FiberOverloadFactor * sqrtl((Len - x));
+		if (x < Len - X0 / 2)
+			Factor = 1 + FiberOverloadFactor * sqrtl((Len - X0 / 2 - x));
 
 		TotalFactor += Factor;
 	}

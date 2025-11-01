@@ -30,9 +30,6 @@
     <ClInclude Include="TDataStructure.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Crack.h">
       <Filter>头文件</Filter>
     </ClInclude>

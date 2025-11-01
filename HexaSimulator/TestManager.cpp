@@ -17,12 +17,12 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		/*auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
-		Report[t] = new FailureReport_t(ResultC);*/
+		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
+		Report[t] = new FailureReport_t(ResultC);
 
 		/*auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
-		Report[t + TestCount] = new FailureReport_t(ResultS);
-		printf("Complete!\n");*/
+		Report[t + TestCount] = new FailureReport_t(ResultS);*/
+		printf("Complete!\n");
 	}
 }
 void TestManager_t::SaveResults()
@@ -37,7 +37,8 @@ void TestManager_t::SaveResults()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		//fprintf(FOut, "%u,%u,%u,\n", Test[t]->DesiredLife, Report[t]->Cycle, Report[t + TestCount]->Cycle);
-		fprintf(FOut, "%u,%u,\n", Test[t]->DesiredLife, Report[t + TestCount]->Cycle);
+		fprintf(FOut, "%u,%u,\n", Test[t]->DesiredLife, Report[t]->Cycle);
+
 	}
 
 	fclose(FOut);
@@ -138,6 +139,7 @@ void TestManager_t::InputManager_t::GetFibers()
 	Record++; 
 
 	sscanf(RawData[Record], "%d,", &FiberTypeCount);
+	printf("TestManager:FiberType:%u\n", FiberTypeCount);
 
 	//Skip "FiberID..." Row
 	Record += 2;
@@ -172,6 +174,7 @@ void TestManager_t::InputManager_t::GetMatrixs()
 	Record++;
 
 	sscanf(RawData[Record], "%d,", &MatrixTypeCount);
+	printf("TestManager:MatrixType:%u\n", MatrixTypeCount);
 
 	Record += 2;
 
@@ -211,6 +214,7 @@ void TestManager_t::InputManager_t::GetComposites()
 	Record++;
 
 	sscanf(RawData[Record], "%d,", &CompositeTypeCount);
+	printf("TestManager:CompositeType:%u\n", CompositeTypeCount);
 
 	Record += 2;
 
@@ -245,6 +249,7 @@ void TestManager_t::InputManager_t::GetSpectras()
 	Record++;
 
 	sscanf(RawData[Record], "%d,", &SpectraCount);
+	printf("TestManager:SpectraType:%u\n", SpectraCount);
 
 	Record += 2;
 
@@ -274,6 +279,7 @@ void TestManager_t::InputManager_t::GetTests()
 	Record++;
 
 	sscanf(RawData[Record], "%d,", &TestCount);
+	printf("TestManager:TestType:%u\n", TestCount);
 
 	Record += 2;
 

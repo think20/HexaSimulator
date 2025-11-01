@@ -143,7 +143,9 @@
       <AdditionalDependencies>opencv_world4120.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <HeapReserveSize>
       </HeapReserveSize>
-      <StackCommitSize>104,857,600</StackCommitSize>
+      <StackCommitSize>209,715,200</StackCommitSize>
+      <StackReserveSize>
+      </StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

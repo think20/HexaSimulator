@@ -11,7 +11,7 @@
 #include <random>
 
 constexpr unsigned int NeighberMax = 6;
-constexpr unsigned int LayerMax = 15;
+constexpr unsigned int LayerMax = 20;
 
 constexpr unsigned int StackPerThread = SlicesMax / ThreadMax;
 
