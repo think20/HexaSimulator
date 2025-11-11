@@ -23,6 +23,7 @@ constexpr char Dir[] = "C:\\Users\\12155\\Source\\repos\\think20\\HexaSimulator\
 
 constexpr char TestData[] = "TestDataC.csv";
 constexpr char GeneralResult[] = "Result.csv";
+constexpr char FractureReport[] = "Fractures.csv";
 
 class Fiber_t
 {
@@ -69,7 +70,7 @@ public:
 	unsigned int SpectraID;
 	double MaxLoad;
 	unsigned int DesiredLife;
-	double InitCrackRadious;
+	double ICLCentral, ICLSide, ICLRect;
 	double L;
 };
 class TestManager_t
@@ -108,8 +109,20 @@ private:
 
 		TestManager_t* TestManager;
 	};
-
 	InputManager_t* InputManager;
+	class OutputManager_t
+	{
+	public:
+		OutputManager_t(TestManager_t*);
+		void SaveBasicResults();
+		void SaveFractures();
+	private:
+
+		FILE* FOut;
+		FILE* FracturesOut;
+		TestManager_t* TestManager;
+	};
+	OutputManager_t* OutputManager;
 
 	TestPiece_t** TestPiece;
 	TestPieceInit_t** Init;
@@ -120,7 +133,7 @@ private:
 	Fiber_t** Fiber;
 	FailureReport_t** Report;
 
-	FILE* FOut;
+	
 
 	unsigned int TestCount, SpectraCount, CompositeTypeCount, MatrixTypeCount, FiberTypeCount;
 };

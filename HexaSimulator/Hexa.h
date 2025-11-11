@@ -49,7 +49,7 @@ public:
 	int64_t Load;
 	int64_t SlidingStrength;
 
-	double x, y, r;
+	double x, y, r, theta;
 
 	bool Broken;
 
@@ -67,7 +67,7 @@ public:
 	double SlidingStrength0;
 	unsigned int CrackShape;
 
-	double InitCrackRadious;
+	double ICLCentral, ICLSide, ICLRect;
 	double Em, Ef, Vm;
 	double SigmamMax;
 	double KLow, KIC;

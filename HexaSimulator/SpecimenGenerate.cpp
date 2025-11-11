@@ -45,7 +45,9 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit->StrengthDecay = Init.StrengthDecay;
 	HexaInit->ScatterDecay = Init.ScatterDecay;
 	HexaInit->SlidingStrength0 = Init.SlidingStrength0;
-	HexaInit->InitCrackRadious = Init.InitCrackRadious;
+	HexaInit->ICLCentral = Init.ICLCentral;
+	HexaInit->ICLSide = Init.ICLSide;
+	HexaInit->ICLRect = Init.ICLRect;
 	HexaInit->SpecimenRadious = Init.SpecimenRadious;
 	HexaInit->Em = Init.Em;
 	HexaInit->Ef = Init.Ef;

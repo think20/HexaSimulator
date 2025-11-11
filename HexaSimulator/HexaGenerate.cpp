@@ -69,6 +69,7 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 		Node->r = 0;
 		Node->x = 0;
 		Node->y = 0;
+		Node->theta = atan2(Node->y, Node->x);
 		
 		(NodeCount[Slice])++;
 		return;
@@ -111,6 +112,7 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 			NodeNow->r = 2.0 * (1.0 * Layer - 1.0) * R1;
 			NodeNow->x = 2.0 * (1.0 * Layer - 1.0) * R1 * Orient[Edge - 1][0];
 			NodeNow->y = 2.0 * (1.0 * Layer - 1.0) * R1 * Orient[Edge - 1][1];
+			NodeNow->theta = atan2(NodeNow->y, NodeNow->x);
 			/*NodeNow->OffsetAngle = OffsetK * NodeNow->r / R0 + OffsetB;
 			if (NodeNow->OffsetAngle < ThetaThresh) NodeNow->OffsetDamageFactor = 1;
 			else
@@ -148,6 +150,7 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 		NodeNow->x = Ratio * double(NodeEnd->x) + (1 - Ratio) * double(NodeStart->x);
 		NodeNow->y = Ratio * double(NodeEnd->y) + (1 - Ratio) * double(NodeStart->y);
 		NodeNow->r = sqrt(pow(NodeNow->x, 2) + pow(NodeNow->y, 2));
+		NodeNow->theta = atan2(NodeNow->y, NodeNow->x);
 		/*NodeNow->OffsetAngle = OffsetK * NodeNow->r / R0 + OffsetB;
 		if (NodeNow->OffsetAngle < ThetaThresh) NodeNow->OffsetDamageFactor = 1;
 		else 
@@ -206,8 +209,13 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		double Req = sqrtl(NodeCount[Slice] * R0 * R0 / Vf);
 		if (CrackShape == CentralCrack)
 			CrackManager->CreateCrack(Req, Slice);
+
 		else if (CrackShape == RectSideCrack)
 			CrackManager->CreateRectSideCrack(X0, Slice);
+
+		else if (CrackShape == SCAlatering)
+			CrackManager->CreateRectSideCrack(X0, Slice);
+
 		else if(CrackShape == SideCrack)
 			CrackManager->CreateSideCrack(Slice);
 	}
@@ -273,7 +281,9 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 {
 	CrackManagerInit = new CrackManagerInit_t;
-	CrackManagerInit->InitCrackRadious = Init.InitCrackRadious;
+	CrackManagerInit->ICLCentral = Init.ICLCentral;
+	CrackManagerInit->ICLSide = Init.ICLSide;
+	CrackManagerInit->ICLRect = Init.ICLRect;
 	CrackManagerInit->SpecimenRadious = Init.SpecimenRadious;
 	CrackManagerInit->Em = Init.Em;
 	CrackManagerInit->Ef = Init.Ef;

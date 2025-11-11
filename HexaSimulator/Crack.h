@@ -112,7 +112,7 @@ private:
 class CrackManagerInit_t
 {
 public:
-	double InitCrackRadious, SpecimenRadious;
+	double ICLCentral, ICLSide, ICLRect, SpecimenRadious;
 
 	double Em, Ef, Vm, Vf;
 	double SigmamMax;
@@ -140,7 +140,7 @@ private:
 	std::uniform_real_distribution<>* OrientDist;
 	unsigned int Seed;
 
-	double InitCrackRadious, SpecimenRadious;
+	double  ICLCentral, ICLSide, ICLRect, SpecimenRadious;
 	CrackInit_t* CrackInit;
 	RectSideCrackInit_t* RectSideCrackInit;
 	SideCrackInit_t* SideCrackInit;

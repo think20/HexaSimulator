@@ -167,10 +167,11 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	return b;
 }
 
-double SideCrack_t::DistanceToCrackFront(double x, double y)
+double SideCrack_t::DistanceToCrackFront(double R, double Theta)
 {
-	x = x * cosf(Orient);
-	y = y * sinf(Orient);
+	auto ThetaRel = Theta + Orient;
+	auto x = R * cos(ThetaRel);
+	auto y = R * sin(ThetaRel);
 
 	//only the right half of the crack is modeled, and the crack is about the symmetry of the y-axis
 	x = fabs(x);
@@ -253,7 +254,7 @@ SideCrack_t::SideCrack_t(double b0, double c0, double R, double Orient, SideCrac
 {
 	ParametersCopying(Init);
 	S = 0;
-	MaxCrackLen = 0.99 * 2 * R;
+	MaxCrackLen = 0.50 * 2 * R;
 	Yb = 0;
 	Yc = 0;
 	Kb = 0;
@@ -268,7 +269,9 @@ SideCrack_t::SideCrack_t(double b0, double c0, double R, double Orient, SideCrac
 }
 void CrackManager_t::ParametersCopying(CrackManagerInit_t Init)
 {
-	InitCrackRadious = Init.InitCrackRadious;
+	ICLCentral = Init.ICLCentral;
+	ICLSide = Init.ICLSide;
+	ICLRect = Init.ICLRect;
 	SpecimenRadious = Init.SpecimenRadious;
 }
 void CrackManager_t::CrackInitReady(CrackManagerInit_t Init)
@@ -343,14 +346,14 @@ CrackManager_t::CrackManager_t(CrackManagerInit_t Init)
 }
 Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
 {
-	auto NewCrack = new Crack_t(InitCrackRadious, Req, *CrackInit);
+	auto NewCrack = new Crack_t(ICLCentral, Req, *CrackInit);
 	Crack[Slice] = NewCrack;
 	//printf("CrackManager: Created Crack with InitRadious:%.2lfum\n", InitCrackRadious * E6);
 	return NewCrack;
 }
 RectSideCrack_t* CrackManager_t::CreateRectSideCrack(double X, unsigned int Slice)
 {
-	auto NewRectSideCrack = new RectSideCrack_t(InitCrackRadious, X, *RectSideCrackInit);
+	auto NewRectSideCrack = new RectSideCrack_t(ICLRect, X, *RectSideCrackInit);
 	RectSideCrack[Slice] = NewRectSideCrack;
 	//printf("CrackManager: Created Crack with InitRadious:%.2lfum\n", InitCrackRadious * E6);
 	return NewRectSideCrack;
@@ -358,7 +361,11 @@ RectSideCrack_t* CrackManager_t::CreateRectSideCrack(double X, unsigned int Slic
 SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
 {
 	double Orient = (*OrientDist)(RandDevice);
-	auto NewSideCrack = new SideCrack_t(InitCrackRadious, InitCrackRadious, SpecimenRadious, Orient, *SideCrackInit);
+	//CONST ORIENT FOR F2?
+	//double Orient = 0;
+
+	//printf("CrackManager:Orient:%.2lf\n", Orient);
+	auto NewSideCrack = new SideCrack_t(ICLSide, ICLSide, SpecimenRadious, Orient, *SideCrackInit);
 	SideCrack[Slice] = NewSideCrack;
 	return NewSideCrack;
 }

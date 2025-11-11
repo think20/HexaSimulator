@@ -361,6 +361,12 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor); // Far field load, not local
 	if (CrackLen > SideCrack->MaxCrackLen)
 	{
+		//printf("TestPiece:Fail at Slice %u!\n", Slice->Slice);
+		for (auto s = 0; s < SlicesMax; s++)
+		{
+			//if (this->Slice[s]->SideCrack != nullptr)
+				//printf("TestPiece: Slice %u SideCrackLen: %.2lf um\n", s, this->Slice[s]->SideCrack->Len()*E6);
+		}
 		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
 		/*printf("Crack to long at Slice %d at Cycle %d with CrackLen %.2lfmm\n", Slice->Slice, LoadCycle, CrackLen * E3);
 		for (unsigned int s = 0; s < SlicesMax; s++)
@@ -405,11 +411,11 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
 
-		auto& x = (*Node)->x;
-		auto& y = (*Node)->y;
+		auto& R = (*Node)->r;
+		auto& Theta = (*Node)->theta;
 		double Factor = 1;//default, Fiber not in Crack
 
-		double Dis = Slice->SideCrack->DistanceToCrackFront(x, y);
+		double Dis = Slice->SideCrack->DistanceToCrackFront(R, Theta);
 		if (Dis < 0)
 			Factor = 1 + FiberOverloadFactor * sqrtl((-Dis));
 
@@ -433,12 +439,25 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
 
 		double Req = sqrtl(Slice->NodeCount * R0 * R0 / Vf);
+		
 		if (CrackShape == CentralCrack)
 			Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
+
 		else if (CrackShape == RectSideCrack)
 			Slice->RectSideCrack = Hexa->CrackManager->CreateRectSideCrack(X0, Slice->Slice);
+
+		else if (CrackShape == SCAlatering)
+		{
+			if (Slice->Slice % 2 == 0)
+				Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);
+			else
+				Slice->Crack = Hexa->CrackManager->CreateCrack(Req, Slice->Slice);
+		}
+
+
 		else if(CrackShape==SideCrack)
 			Slice->SideCrack = Hexa->CrackManager->CreateSideCrack(Slice->Slice);
+			
 	}
 
 	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
@@ -593,12 +612,12 @@ double TestPiece_t::FindFiberLoadBaselineWithSideCrack(Slice_t* Slice)
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
 
-		auto& x = (*Node)->x;
-		auto& y = (*Node)->y;
+		auto& R = (*Node)->r;
+		auto& Theta = (*Node)->theta;
 
 		double Factor = 1;//default, Fiber not in Crack
 
-		double Dis = Slice->SideCrack->DistanceToCrackFront(x, y);
+		double Dis = Slice->SideCrack->DistanceToCrackFront(R, Theta);
 		if (Dis < 0)
 			Factor = 1 + FiberOverloadFactor * sqrtl((-Dis));
 
@@ -613,13 +632,11 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 	this->Cycle = Cycle;
 	this->CrackLen = CrackLen;
 
-	FractureCount = new unsigned int[SlicesMax];
-	for (unsigned int s = 0; s < SlicesMax; s++)
-		FractureCount[s] = 0;
-
 	Fractures = new TQueue_t<PlanePos_t*>* [SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)
+	{
 		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
+	}
 
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
@@ -628,9 +645,9 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 		{
 			if ((*Node)->Broken)
 			{
-				auto NewPlanePos = new PlanePos_t((*Node)->x, (*Node)->y);
+				auto NewPlanePos = new PlanePos_t((*Node)->x / (2 * TestPiece->R0), (*Node)->y / (2 * TestPiece->R0));
 				Fractures[s]->Push(NewPlanePos);
-				FractureCount[s]++;
+				//printf("FailureReport:Broken!\n");
 			}
 		}
 	}
@@ -641,10 +658,6 @@ FailureReport_t::FailureReport_t(FailureReport_t& From)
 	this->Cycle = From.Cycle;
 	this->CrackLen = From.CrackLen;
 
-	FractureCount = new unsigned int[SlicesMax];
-	for (unsigned int s = 0; s < SlicesMax; s++)
-		FractureCount[s] = From.FractureCount[s];
-
 	Fractures = new TQueue_t<PlanePos_t*>*[SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)
 		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
@@ -654,6 +667,7 @@ FailureReport_t::FailureReport_t(FailureReport_t& From)
 		while (!From.Fractures[s]->Empty())
 		{
 			auto NewPlanePos = new PlanePos_t(*From.Fractures[s]->Front());
+			Fractures[s]->Push(NewPlanePos);
 			From.Fractures[s]->Pop();
 		}
 	}

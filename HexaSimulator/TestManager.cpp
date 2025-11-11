@@ -17,31 +17,18 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
-		Report[t] = new FailureReport_t(ResultC);
+		//auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
+		//Report[t] = new FailureReport_t(ResultC);
 
-		/*auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
-		Report[t + TestCount] = new FailureReport_t(ResultS);*/
+		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
+		Report[t + TestCount] = new FailureReport_t(ResultS);
 		printf("Complete!\n");
 	}
 }
 void TestManager_t::SaveResults()
 {
-	std::string DirS(Dir);
-	std::string GeneralResultS(GeneralResult);
-
-	FOut = fopen((DirS + GeneralResultS).c_str(), "w");
-
-	//fprintf(FOut, "Exp,C,S\n");
-	fprintf(FOut, "Exp,S\n");
-	for (unsigned int t = 0; t < TestCount; t++)
-	{
-		//fprintf(FOut, "%u,%u,%u,\n", Test[t]->DesiredLife, Report[t]->Cycle, Report[t + TestCount]->Cycle);
-		fprintf(FOut, "%u,%u,\n", Test[t]->DesiredLife, Report[t]->Cycle);
-
-	}
-
-	fclose(FOut);
+	OutputManager->SaveBasicResults();
+	OutputManager->SaveFractures();
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -53,7 +40,9 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	auto& NowSpectra = Spectra[NowTest->SpectraID];
 
 	NowInit->MaxLoad = NowTest->MaxLoad;
-	NowInit->InitCrackRadious = NowTest->InitCrackRadious;
+	NowInit->ICLCentral = NowTest->ICLCentral;
+	NowInit->ICLSide = NowTest->ICLSide;
+	NowInit->ICLRect = NowTest->ICLRect;
 	NowInit->L = NowTest->L;
 
 	NowInit->Vf = NowComposite->Vf;
@@ -104,6 +93,7 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 		TestPiece[TestID] = new TestPiece_t(*NowInit);
 
 		NowInit->CrackShape = SideCrack;
+		//NowInit->CrackShape = SCAlatering;
 		TestPiece[TestID + TestCount] = new TestPiece_t(*NowInit);
 	}
 	else
@@ -232,6 +222,7 @@ void TestManager_t::InputManager_t::GetComposites()
 		unsigned int IsRect = 0;
 		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%lf,%lf,%u,%u,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &IsRect, &NewComposite->X0, &NewComposite->Y0, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint);
 
+		//uint -> bool
 		NewComposite->Rect = IsRect == 1 ? true : false;
 		NewComposite->X0 *= EM6;
 		NewComposite->Y0 *= EM6;
@@ -294,9 +285,12 @@ void TestManager_t::InputManager_t::GetTests()
 		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
-		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->InitCrackRadious,&NewTest->L);
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L);
 		NewTest->MaxLoad *= E6;
-		NewTest->InitCrackRadious *= EM6;
+		NewTest->ICLCentral *= EM6;
+		NewTest->ICLSide *= EM6;
+		NewTest->ICLRect *= EM6;
+		//printf("TestManager:ICLC:%.2lf,ICLS:%.2lf,ICLR:%.2lf\n", NewTest->ICLCentral*E6, NewTest->ICLSide*E6, NewTest->ICLRect*E6);
 		NewTest->L *= EM6;
 		//printf("TestManager:InitCrackLen=%.2lfum\n", NewTest->InitCrackRadious * E6);
 
@@ -377,7 +371,45 @@ void TestManager_t::InputManager_t::GetNums(char* From, unsigned int* Dest, bool
 
 	}
 }
+void TestManager_t::OutputManager_t::SaveBasicResults()
+{
+	fprintf(FOut, "Name,PeakLoad,Exp,C,S\n");
+	//fprintf(FOut, "Exp,S\n");
+	for (unsigned int t = 0; t < TestManager->TestCount; t++)
+	{
+		//fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
+		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle);
+		fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
 
+	}
+
+	fclose(FOut);
+}
+void TestManager_t::OutputManager_t::SaveFractures()
+{
+	for (unsigned int t = 0; t < TestManager->TestCount; t++)
+	{
+		fprintf(FracturesOut, "Test%2d:,\n", t);
+		//auto& Report = (TestManager->Report[t]);
+		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
+		// 
+		//Discard First Layer
+		for (unsigned int s = 0+1; s < SlicesMax; s++)
+		{
+			auto& Fractures = (Report->Fractures[s]);
+			//printf("TestManager:Slice %u Fracture %u\n", s, Fractures->DebugGetSize());
+			
+			while (!Fractures->Empty())
+			{
+				auto PosNow = (Fractures->Front());
+				fprintf(FracturesOut, "%lf,%lf\n", PosNow->X, PosNow->Y);
+				Fractures->Pop();
+			}
+		}
+	}
+
+	fclose(FracturesOut);
+}
 TestManager_t::InputManager_t::InputManager_t(TestManager_t* TestManager)
 {
 	std::string DirS(Dir);
@@ -401,6 +433,17 @@ TestManager_t::InputManager_t::InputManager_t(TestManager_t* TestManager)
 
 	this->TestManager = TestManager;
 }
+TestManager_t::OutputManager_t::OutputManager_t(TestManager_t* TestManager)
+{
+	std::string DirS(Dir);
+	std::string GeneralResultS(GeneralResult);
+	std::string FractureS(FractureReport);
+
+	FOut = fopen((DirS + GeneralResultS).c_str(), "w");
+	FracturesOut = fopen((DirS + FractureS).c_str(), "w");
+
+	this->TestManager = TestManager;
+}
 TestManager_t::TestManager_t()
 {
 	TestPiece = new TestPiece_t* [MaxTestPiece];
@@ -413,4 +456,5 @@ TestManager_t::TestManager_t()
 	Report = new FailureReport_t* [MaxTestType];
 
 	InputManager = new TestManager_t::InputManager_t(this);
+	OutputManager = new TestManager_t::OutputManager_t(this);
 }

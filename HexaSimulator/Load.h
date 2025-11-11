@@ -9,7 +9,7 @@ constexpr double LLSFactor[LLSIMax + 1] = { 0,1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 constexpr double MaxLoadRatio = 0.95;
-constexpr double FiberOverloadFactor = 100; // by trial,100~1000
+constexpr double FiberOverloadFactor = 300; // by trial,100~1000
 
 class LLSNode_t
 {
@@ -64,7 +64,7 @@ public:
 	double StrengthDecay, ScatterDecay;
 	double SlidingStrength0;
 
-	double InitCrackRadious;
+	double ICLCentral,ICLSide,ICLRect;
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
@@ -141,9 +141,9 @@ class PlanePos_t
 {
 public:
 	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y) {};
-	PlanePos_t(unsigned int X, unsigned int Y) : X(X), Y(Y) {};
+	PlanePos_t(double X,double Y) : X(X), Y(Y) {};
 
-	unsigned int X, Y;
+	double X, Y;
 };
 class FailureReport_t
 {
@@ -153,6 +153,5 @@ public:
 	~FailureReport_t();
 	unsigned int Slice, Cycle;
 	double CrackLen;
-	unsigned int* FractureCount;
 	TQueue_t<PlanePos_t*>** Fractures;
 };
