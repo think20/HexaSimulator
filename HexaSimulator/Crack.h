@@ -51,8 +51,10 @@ public:
 	double* Mm;
 
 };
+
 class RectSideCrack_t
 {
+
 public:
 	RectSideCrack_t(double, double, RectSideCrackInit_t Init);
 	double UpdateCrack(double);
@@ -75,9 +77,9 @@ private:
 
 constexpr unsigned int bTerm = 5;
 constexpr unsigned int cTerm = 5;
-constexpr double bPara[bTerm] = { 0.906,-1.23,5.99,12,-11.2 };
+constexpr double bPara[bTerm] = { 0.906,-1.23,0.599,12,-11.2 };
 constexpr double cPara[cTerm] = { 1.12,-2.61,7.34,1.41,-4.28 };
-constexpr double dbFactor = 1.5;
+constexpr double dbFactor = 1.6;
 constexpr double dcFactor = 1;
 
 class SideCrackInit_t
@@ -88,8 +90,10 @@ public:
 	double* Mm;
 };
 
+class FailureReport_t;
 class SideCrack_t
 {
+	friend class FailureReport_t;
 public:
 	SideCrack_t(double, double, double, double, SideCrackInit_t);
 	double UpdateCrack(double);
@@ -103,6 +107,8 @@ private:
 	double Kb, Kc;
 	double b, c, D, R;
 	double k0, b0;
+
+	//Orient means the degree fibers rotate, or the degree the crack rotates counter-clockwise
 	double Orient;
 
 	double KLow, KIC;

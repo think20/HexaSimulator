@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="Crack.h" />
     <ClInclude Include="Hexa.h" />
+    <ClInclude Include="Probe.h" />
     <ClInclude Include="TestManager.h" />
     <ClInclude Include="Load.h" />
     <ClInclude Include="stdafx.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="HexaGenerate.cpp" />
     <ClCompile Include="Load.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Probe.cpp" />
     <ClCompile Include="SpecimenGenerate.cpp" />
     <ClCompile Include="TestManager.cpp" />
     <ClCompile Include="Visualizer.cpp" />

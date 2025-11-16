@@ -115,14 +115,16 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	{
 		Yb += bPara[Order] * powl((b / D), double(Order));
 		Yc += cPara[Order] * powl((b / D), double(Order)); //original paper says b/D rather than c/D
+		//Yc += cPara[Order] * powl((c / D), double(Order));
 	}
 
+	//printf("SideCrack:Yb %.2lf Yc %.2lf\n", Yb, Yc);
 	Kb = Yb * Sigma * sqrt(pi * b) * EM6; //MPa
 	Kc = Yc * Sigma * sqrt(pi * c) * EM6; //MPa
 
 	//printf("kb:%.2lf MPa/m^1/2\n", Kb);
 
-	if (Kb > KIC)
+	if (Kb > KIC || Kc > KIC)
 	{
 		b = MaxCrackLen+1*EM6;
 		return b;
@@ -152,7 +154,9 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	if (DeltaKb > 0) b += Cb * powl(DeltaKb, Mb) * dbFactor;
 	if (DeltaKc > 0) c += Cc * powl(DeltaKc, Mc) * dcFactor;
 
-	//printf("%.2lf\n", b * E6);
+	if (b / D < 0.1) c = 0.4 * b;
+
+	//printf("SideCrack: b%.2lf c%.2lf\n", b * E6,c*E6);
 
 	//y=kx+b,Right half of the crack front
 	k0 = (c * c - 2 * b * R * R) / (c * R * sqrt(4 - c * c / (R * R)));
@@ -263,9 +267,9 @@ SideCrack_t::SideCrack_t(double b0, double c0, double R, double Orient, SideCrac
 	c = c0;
 	D = 2 * R;
 	this->R = R;
-	k0 = 0;
-	b0 = 0;
-	Orient = Orient;
+	this->k0 = 0;
+	this->b0 = 0;
+	this->Orient = Orient;
 }
 void CrackManager_t::ParametersCopying(CrackManagerInit_t Init)
 {

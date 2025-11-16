@@ -392,13 +392,20 @@ void TestManager_t::OutputManager_t::SaveFractures()
 		fprintf(FracturesOut, "Test%2d:,\n", t);
 		//auto& Report = (TestManager->Report[t]);
 		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
-		// 
+
 		//Discard First Layer
 		for (unsigned int s = 0+1; s < SlicesMax; s++)
 		{
+			fprintf(FracturesOut, "Slice %d:,\nCrack fronts:,\n", s);
+			auto& CrackFront = Report->CrackFronts[s];
+			while (!CrackFront->Empty())
+			{
+				auto FrontNow = (CrackFront->Front());
+				fprintf(FracturesOut, "%lf,%lf\n", FrontNow->X, FrontNow->Y);
+				CrackFront->Pop();
+			}
+			fprintf(FracturesOut, "Fractures:,\n");
 			auto& Fractures = (Report->Fractures[s]);
-			//printf("TestManager:Slice %u Fracture %u\n", s, Fractures->DebugGetSize());
-			
 			while (!Fractures->Empty())
 			{
 				auto PosNow = (Fractures->Front());

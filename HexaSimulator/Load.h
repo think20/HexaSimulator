@@ -4,12 +4,12 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
-constexpr unsigned int LLSIMax = 1;
-constexpr double LLSFactor[LLSIMax + 1] = { 0,1 };
+constexpr unsigned int LLSIMax = 3;
+constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2.1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 constexpr double MaxLoadRatio = 0.95;
-constexpr double FiberOverloadFactor = 300; // by trial,100~1000
+constexpr double FiberOverloadFactor = 1000; // by trial,100~1000
 
 class LLSNode_t
 {
@@ -69,7 +69,7 @@ public:
 	double* Cm;
 	double* Mm;
 };
-class FailureReport_t;
+
 class TestPiece_t
 {
 	friend class FailureReport_t;
@@ -154,4 +154,5 @@ public:
 	unsigned int Slice, Cycle;
 	double CrackLen;
 	TQueue_t<PlanePos_t*>** Fractures;
+	TQueue_t<PlanePos_t*>** CrackFronts;
 };

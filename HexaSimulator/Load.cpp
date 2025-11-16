@@ -633,9 +633,11 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 	this->CrackLen = CrackLen;
 
 	Fractures = new TQueue_t<PlanePos_t*>* [SlicesMax];
+	CrackFronts = new TQueue_t<PlanePos_t*>*[SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
+		CrackFronts[s] = new TQueue_t<PlanePos_t*>(4);
 	}
 
 	for (unsigned int s = 0; s < SlicesMax; s++)
@@ -650,6 +652,39 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 				//printf("FailureReport:Broken!\n");
 			}
 		}
+		auto& Slice = TestPiece->Slice[s];
+		if (Slice->Crack != nullptr);
+		else if (Slice->SideCrack != nullptr)
+		{
+			auto d0 = TestPiece->R0 * 2;
+
+			auto& b = Slice->SideCrack->b;
+			auto& c = Slice->SideCrack->c;
+			auto& Orient = Slice->SideCrack->Orient;
+			auto& r = Slice->SideCrack->R;
+
+			printf("FailureReport:Slice %u b %.2lf c %.2lf Orient %.2lf R %.2lf\n", s, b * E6, c * E6, Orient, r * E6);
+			auto bx = (r - b) * cos(-pi / 2 - Orient) / d0;
+			auto by = (r - b) * sin(-pi / 2 - Orient) / d0;
+			auto bPos = new PlanePos_t(bx, by);
+
+			auto ThetaC = 2 * asin(c / (2 * r));
+			auto cx = r * cos(-pi / 2 + ThetaC - Orient) / d0;
+			auto cy = r * sin(-pi / 2 + ThetaC - Orient) / d0;
+			auto cPos = new PlanePos_t(cx, cy);
+
+			auto c2x = r * cos(-pi / 2 - ThetaC - Orient) / d0;
+			auto c2y = r * sin(-pi / 2 - ThetaC - Orient) / d0;
+			auto c2Pos = new PlanePos_t(c2x, c2y);
+
+			CrackFronts[s]->Push(bPos);
+			CrackFronts[s]->Push(cPos);
+			CrackFronts[s]->Push(c2Pos);
+
+			//push
+		}
+		else if (Slice->RectSideCrack != nullptr);
+
 	}
 }
 FailureReport_t::FailureReport_t(FailureReport_t& From)
@@ -659,9 +694,12 @@ FailureReport_t::FailureReport_t(FailureReport_t& From)
 	this->CrackLen = From.CrackLen;
 
 	Fractures = new TQueue_t<PlanePos_t*>*[SlicesMax];
+	CrackFronts = new TQueue_t<PlanePos_t*>*[SlicesMax];
 	for (unsigned int s = 0; s < SlicesMax; s++)
+	{
 		Fractures[s] = new TQueue_t<PlanePos_t*>(NodeMax);
-
+		CrackFronts[s] = new TQueue_t<PlanePos_t*>(4);
+	}
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		while (!From.Fractures[s]->Empty())
@@ -669,6 +707,12 @@ FailureReport_t::FailureReport_t(FailureReport_t& From)
 			auto NewPlanePos = new PlanePos_t(*From.Fractures[s]->Front());
 			Fractures[s]->Push(NewPlanePos);
 			From.Fractures[s]->Pop();
+		}
+		while (!From.CrackFronts[s]->Empty())
+		{
+			auto NewPlanePos = new PlanePos_t(*From.CrackFronts[s]->Front());
+			CrackFronts[s]->Push(NewPlanePos);
+			From.CrackFronts[s]->Pop();
 		}
 	}
 }
