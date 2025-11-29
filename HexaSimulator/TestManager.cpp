@@ -17,8 +17,8 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		//auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
-		//Report[t] = new FailureReport_t(ResultC);
+		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
+		Report[t] = new FailureReport_t(ResultC);
 
 		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
 		Report[t + TestCount] = new FailureReport_t(ResultS);
@@ -44,6 +44,9 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->ICLSide = NowTest->ICLSide;
 	NowInit->ICLRect = NowTest->ICLRect;
 	NowInit->L = NowTest->L;
+	NowInit->MaxLoadRatio = NowTest->MaxLoadRatio;
+	NowInit->FiberOverloadFactor = NowTest->FiberOverloadFactor;
+	NowInit->OrientDistributionModel = NowTest->OrientDistributionModel;
 
 	NowInit->Vf = NowComposite->Vf;
 	//OffsetK and B not simulated yet;
@@ -285,7 +288,7 @@ void TestManager_t::InputManager_t::GetTests()
 		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
-		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L);
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel);
 		NewTest->MaxLoad *= E6;
 		NewTest->ICLCentral *= EM6;
 		NewTest->ICLSide *= EM6;
@@ -377,9 +380,9 @@ void TestManager_t::OutputManager_t::SaveBasicResults()
 	//fprintf(FOut, "Exp,S\n");
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
-		//fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
+		fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
 		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle);
-		fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
+		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
 
 	}
 
@@ -389,27 +392,32 @@ void TestManager_t::OutputManager_t::SaveFractures()
 {
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
-		fprintf(FracturesOut, "Test%2d:,\n", t);
+		fprintf(FracturesOut, "Test%d:,\n", t);
 		//auto& Report = (TestManager->Report[t]);
 		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
 
+		auto Count = 0;
+		for (unsigned int s = 0 + 1; s < SlicesMax; s++)
+			Count += Report->Fractures[s]->DebugGetSize();
+		fprintf(FracturesOut, "%u,\n", Count);
+
 		//Discard First Layer
-		for (unsigned int s = 0+1; s < SlicesMax; s++)
+		for (unsigned int s = 0 + 1; s < SlicesMax; s++)
 		{
-			fprintf(FracturesOut, "Slice %d:,\nCrack fronts:,\n", s);
+			//fprintf(FracturesOut, "Slice %d:,\nCrack fronts:,\n", s);
 			auto& CrackFront = Report->CrackFronts[s];
 			while (!CrackFront->Empty())
 			{
 				auto FrontNow = (CrackFront->Front());
-				fprintf(FracturesOut, "%lf,%lf\n", FrontNow->X, FrontNow->Y);
+				//fprintf(FracturesOut, "%lf,%lf\n", FrontNow->X, FrontNow->Y);
 				CrackFront->Pop();
 			}
-			fprintf(FracturesOut, "Fractures:,\n");
+			//fprintf(FracturesOut, "Fractures:,\n");
 			auto& Fractures = (Report->Fractures[s]);
 			while (!Fractures->Empty())
 			{
 				auto PosNow = (Fractures->Front());
-				fprintf(FracturesOut, "%lf,%lf\n", PosNow->X, PosNow->Y);
+				fprintf(FracturesOut, "%lf,%lf,%u,%lf,%lf,%lf\n", PosNow->X, PosNow->Y, s, PosNow->R, PosNow->R2, PosNow->Theta);
 				Fractures->Pop();
 			}
 		}

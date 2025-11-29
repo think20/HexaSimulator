@@ -73,6 +73,7 @@ public:
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
+	unsigned int OrientDistributionModel;
 };
 class Hexa_t
 {

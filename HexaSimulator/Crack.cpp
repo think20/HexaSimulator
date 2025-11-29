@@ -126,7 +126,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 	if (Kb > KIC || Kc > KIC)
 	{
-		b = MaxCrackLen+1*EM6;
+		b = MaxCrackLen + 1 * EM6;
 		return b;
 	}
 
@@ -154,7 +154,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	if (DeltaKb > 0) b += Cb * powl(DeltaKb, Mb) * dbFactor;
 	if (DeltaKc > 0) c += Cc * powl(DeltaKc, Mc) * dcFactor;
 
-	if (b / D < 0.1) c = 0.4 * b;
+	if (b / D < 0.1) c =  b;
 
 	//printf("SideCrack: b%.2lf c%.2lf\n", b * E6,c*E6);
 
@@ -209,7 +209,7 @@ Crack_t::Crack_t(double a0, double R, CrackInit_t Init)
 
 	Yb = 0;
 	Yield = false;
-	MaxCrackLen = 0.99 * R;
+	MaxCrackLen = MaxCrackRatio * R;
 	Sigmab = 0;
 	a = a0;
 	Req = R;
@@ -237,7 +237,7 @@ RectSideCrack_t::RectSideCrack_t(double a0, double X0, RectSideCrackInit_t Init)
 
 	Yb = 0;
 	Yield = false;
-	MaxCrackLen = 0.99 * X0;
+	MaxCrackLen = MaxCrackRatio * X0;
 	Sigmab = 0;
 	a = a0;
 	X = X0;
@@ -258,7 +258,7 @@ SideCrack_t::SideCrack_t(double b0, double c0, double R, double Orient, SideCrac
 {
 	ParametersCopying(Init);
 	S = 0;
-	MaxCrackLen = 0.50 * 2 * R;
+	MaxCrackLen = MaxCrackRatio * 2 * R;
 	Yb = 0;
 	Yc = 0;
 	Kb = 0;
@@ -277,6 +277,7 @@ void CrackManager_t::ParametersCopying(CrackManagerInit_t Init)
 	ICLSide = Init.ICLSide;
 	ICLRect = Init.ICLRect;
 	SpecimenRadious = Init.SpecimenRadious;
+	OrientDistributionModel = Init.OrientDistributionModel;
 }
 void CrackManager_t::CrackInitReady(CrackManagerInit_t Init)
 {
@@ -345,8 +346,12 @@ CrackManager_t::CrackManager_t(CrackManagerInit_t Init)
 		SideCrack[s] = nullptr;
 	}
 
-	this->OrientDist = new std::uniform_real_distribution<>(0.0, 2.0 * pi);
-
+	if (OrientDistributionModel == RandomOrient)
+		this->OrientDist = new std::uniform_real_distribution<>(-pi, pi);
+	else if (OrientDistributionModel == FanShapeOrient)
+		this->OrientDist = new std::uniform_real_distribution<>(-pi / 2, pi / 2);
+	else
+		this->OrientDist = nullptr;
 }
 Crack_t* CrackManager_t::CreateCrack(double Req, unsigned int Slice)
 {
@@ -364,9 +369,12 @@ RectSideCrack_t* CrackManager_t::CreateRectSideCrack(double X, unsigned int Slic
 }
 SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
 {
-	double Orient = (*OrientDist)(RandDevice);
-	//CONST ORIENT FOR F2?
-	//double Orient = 0;
+	double Orient = 0;
+
+	if ((OrientDistributionModel == RandomOrient) or (OrientDistributionModel == FanShapeOrient))
+		Orient = (*OrientDist)(RandDevice);
+	else if (OrientDistributionModel == FixedOrient)
+		Orient = 0;
 
 	//printf("CrackManager:Orient:%.2lf\n", Orient);
 	auto NewSideCrack = new SideCrack_t(ICLSide, ICLSide, SpecimenRadious, Orient, *SideCrackInit);

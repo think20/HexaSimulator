@@ -72,6 +72,9 @@ public:
 	unsigned int DesiredLife;
 	double ICLCentral, ICLSide, ICLRect;
 	double L;
+	double MaxLoadRatio; 
+	double FiberOverloadFactor;
+	unsigned int OrientDistributionModel;
 };
 class TestManager_t
 {
@@ -132,8 +135,6 @@ private:
 	Matrix_t** Matrix;
 	Fiber_t** Fiber;
 	FailureReport_t** Report;
-
-	
 
 	unsigned int TestCount, SpectraCount, CompositeTypeCount, MatrixTypeCount, FiberTypeCount;
 };

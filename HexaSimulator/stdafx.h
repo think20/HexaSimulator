@@ -23,8 +23,12 @@ constexpr unsigned int SideCrack = 1;
 constexpr unsigned int SCAlatering = 2;
 constexpr unsigned int RectSideCrack = 10;
 
+constexpr unsigned int FixedOrient = 20;
+constexpr unsigned int FanShapeOrient = 21;
+constexpr unsigned int RandomOrient = 22;
+
 constexpr unsigned int MaxCycle = 500'0000;
-constexpr char Version[] = "20251111v1";
+constexpr char Version[] = "20251126v1";
 
 // Reaction Layer damage and following fiber damage should be added, 1400MPa
 

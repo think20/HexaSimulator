@@ -279,7 +279,7 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
 	}
-	else SliceFiberLoadFactor == Crack->Yb * Ef / Em;
+	else SliceFiberLoadFactor = Crack->Yb * Ef / Em;
 
 	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
 
@@ -326,7 +326,7 @@ void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int 
 		double FiberLoad = FiberForce / (Vf * pi * SpecimenRadious * SpecimenRadious);
 		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
 	}
-	else SliceFiberLoadFactor == RectSideCrack->Yb * Ef / Em;
+	else SliceFiberLoadFactor = RectSideCrack->Yb * Ef / Em;
 
 	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
 
@@ -663,7 +663,7 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 			auto& Orient = Slice->SideCrack->Orient;
 			auto& r = Slice->SideCrack->R;
 
-			printf("FailureReport:Slice %u b %.2lf c %.2lf Orient %.2lf R %.2lf\n", s, b * E6, c * E6, Orient, r * E6);
+			//printf("FailureReport:Slice %u b %.2lf c %.2lf Orient %.2lf R %.2lf\n", s, b * E6, c * E6, Orient, r * E6);
 			auto bx = (r - b) * cos(-pi / 2 - Orient) / d0;
 			auto by = (r - b) * sin(-pi / 2 - Orient) / d0;
 			auto bPos = new PlanePos_t(bx, by);

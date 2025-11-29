@@ -6,6 +6,7 @@
 
 constexpr unsigned int MaxCrackCount = SlicesMax;
 constexpr unsigned int MaxSideCrackCount = SlicesMax;
+constexpr double MaxCrackRatio = 0.50; //0.50 for HT,0.99 for RT
 
 class CrackInit_t
 {
@@ -125,6 +126,7 @@ public:
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
+	unsigned int OrientDistributionModel;
 };
 class CrackManager_t
 {
@@ -147,6 +149,7 @@ private:
 	unsigned int Seed;
 
 	double  ICLCentral, ICLSide, ICLRect, SpecimenRadious;
+	unsigned int OrientDistributionModel;
 	CrackInit_t* CrackInit;
 	RectSideCrackInit_t* RectSideCrackInit;
 	SideCrackInit_t* SideCrackInit;

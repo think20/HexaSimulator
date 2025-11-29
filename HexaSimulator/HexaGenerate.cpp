@@ -271,7 +271,7 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	Y0 = Init.Y0;
 	Vf = Init.Vf;
 	mf = Init.mf * Init.ScatterDecay;
-	SigmaL = Init.Sigma0 * Init.StrengthDecay * powf(Init.L, -1.0 / mf) * powf(Init.Lg, 1.0 / mf);
+	SigmaL = Init.Sigma0 * Init.StrengthDecay * pow(Init.L, -1.0 / mf) * pow(Init.Lg, 1.0 / mf);
 	SlidingStrength0 = Init.SlidingStrength0;
 
 	CrackShape = Init.CrackShape;
@@ -299,6 +299,7 @@ void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 		CrackManagerInit->Cm[i] = Init.Cm[i];
 		CrackManagerInit->Mm[i] = Init.Mm[i];
 	}
+	CrackManagerInit->OrientDistributionModel = Init.OrientDistributionModel;
 }
 Hexa_t::Hexa_t(HexaInit_t Init)
 {

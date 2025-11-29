@@ -8,9 +8,6 @@ constexpr unsigned int LLSIMax = 3;
 constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2.1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
-constexpr double MaxLoadRatio = 0.95;
-constexpr double FiberOverloadFactor = 1000; // by trial,100~1000
-
 class LLSNode_t
 {
 public:
@@ -59,6 +56,9 @@ public:
 
 	unsigned int CrackShape;
 
+	double MaxLoadRatio;
+	double FiberOverloadFactor;
+
 	bool Rect;
 	double mf, Sigma0, Lg;
 	double StrengthDecay, ScatterDecay;
@@ -68,6 +68,7 @@ public:
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
+	unsigned int OrientDistributionModel;
 };
 
 class TestPiece_t
@@ -129,21 +130,25 @@ private:
 	unsigned int* LoadPercent;
 	double MaxLoad;
 
+	unsigned int CrackShape;
+
+	double MaxLoadRatio; //0.53
+	double FiberOverloadFactor; // by trial,100~1000, 500 is good
+
 	HexaInit_t* HexaInit;
 
 	FailureReport_t** FailureReport;
 	bool HasResult;
 	FailureReport_t* Result;
 
-	unsigned int CrackShape;
 };
 class PlanePos_t
 {
 public:
-	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y) {};
-	PlanePos_t(double X,double Y) : X(X), Y(Y) {};
+	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y), R(From.R), R2(From.R2), Theta(From.Theta) {};
+	PlanePos_t(double X, double Y) : X(X), Y(Y), R(sqrt(X* X + Y * Y)), R2(R* R), Theta(atan2(Y, X) * 180 / 3.14 + 180) {};
 
-	double X, Y;
+	double X, Y, R, R2, Theta;
 };
 class FailureReport_t
 {
