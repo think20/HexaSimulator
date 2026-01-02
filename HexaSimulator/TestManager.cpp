@@ -17,8 +17,8 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
-		Report[t] = new FailureReport_t(ResultC);
+		//auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
+		//Report[t] = new FailureReport_t(ResultC);
 
 		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
 		Report[t + TestCount] = new FailureReport_t(ResultS);
@@ -27,8 +27,8 @@ void TestManager_t::StartTests()
 }
 void TestManager_t::SaveResults()
 {
-	OutputManager->SaveBasicResults();
-	OutputManager->SaveFractures();
+	//OutputManager->SaveBasicResults();
+	//OutputManager->SaveFractures();
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -393,7 +393,10 @@ void TestManager_t::OutputManager_t::SaveFractures()
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
 		fprintf(FracturesOut, "Test%d:,\n", t);
+
+		//Central Crack Fractures
 		//auto& Report = (TestManager->Report[t]);
+		//Side Crack Fractures
 		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
 
 		auto Count = 0;

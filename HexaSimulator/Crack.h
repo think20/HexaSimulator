@@ -8,6 +8,15 @@ constexpr unsigned int MaxCrackCount = SlicesMax;
 constexpr unsigned int MaxSideCrackCount = SlicesMax;
 constexpr double MaxCrackRatio = 0.50; //0.50 for HT,0.99 for RT
 
+class PlanePos_t
+{
+public:
+	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y), R(From.R), R2(From.R2), Theta(From.Theta) {};
+	PlanePos_t(double X, double Y) : X(X), Y(Y), R(sqrt(X* X + Y * Y)), R2(R* R), Theta(atan2(Y, X) * 180 / 3.14 + 180) {};
+
+	double X, Y, R, R2, Theta;
+};
+
 class CrackInit_t
 {
 public:
@@ -94,12 +103,13 @@ public:
 class FailureReport_t;
 class SideCrack_t
 {
-	friend class FailureReport_t;
+	//friend class FailureReport_t;
 public:
 	SideCrack_t(double, double, double, double, SideCrackInit_t);
 	double UpdateCrack(double);
 	double DistanceToCrackFront(double, double);
 	double Len();
+	void Front(PlanePos_t**);
 	double S;
 	double MaxCrackLen;
 private:

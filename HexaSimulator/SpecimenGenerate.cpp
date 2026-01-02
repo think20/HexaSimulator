@@ -78,8 +78,6 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 		if (!Node->OverBoarder)
 		{
 			Nodes->Push(Node);
-			//if(Slice==0)
-				//printf("Slice:x=%.2lf\n", Node->x * E6);
 		}
 	}
 	this->Capablity = Hexa->Capablity[Slice];

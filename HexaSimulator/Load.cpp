@@ -38,8 +38,6 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 		cvm.wait_for(lock,std::chrono::seconds(1), [&] {return this->Finish == ThreadMax; });
 		
 
-		//printf("TestPiece:SyncTotalStep %u\n", this->SyncTotalStep);
-
 		for (auto t = 0; t < ThreadMax; t++)
 		{
 			if (FailureReport[t] != nullptr)
@@ -50,7 +48,14 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 			}
 		}
 		
-		if (HasResult) break;
+		if (HasResult)
+		{
+			//if (Slice[0]->SideCrack != nullptr)
+			//{
+			//	ShowSideCrackFront(Slice[0]);
+			//}
+			break;
+		}
 
 		this->SyncTotalStep++;
 		this->Finish = 0;
@@ -120,6 +125,8 @@ void TestPiece_t::FiberLoad(Slice_t* Slice, unsigned int TotalStep)
 	//Otherwise Distributed in sync
 
 	LoadDistribute(Slice, LoadStep, LoadCycle); 
+	if(Slice->Slice==0)
+		printf("TestPiece: Slice 0,TotalStep %u\n", TotalStep);
 	LoadRedistribute(Slice);
 	FiberDamage(Slice);
 	return;
@@ -141,11 +148,9 @@ void TestPiece_t::LoadRedistribute(Slice_t* Slice)
 	
 	for (auto Node= Slice->Nodes->Begin();Node!=Slice->Nodes->End();Node++)
 	{
-		
 		if ((*Node)->Load > (*Node)->MaxStress)
 		{
-			Slice->OverLoadNodes->Push(*Node);
-			//printf("Debug Overload:(%d,%d),%d>%d\n", Slice, Index, Node->Load, Node->MaxStress);
+			Slice->OverLoadNodes->Push(*Node);//Overload != broken,might also be sliding
 		}
 	}
 	/*std::vector<int>::iterator iter;
@@ -192,6 +197,7 @@ void TestPiece_t::LoadRedistribute(Slice_t* Slice)
 		}
 
 		Node->Load = Node->MaxStress;
+		//printf("TestPiece:(%.2lf,%.2lf),%lld=%lld\n", (Node)->x * E6, (Node)->y * E6, (Node)->Load, (Node)->MaxStress);
 		Slice->AnsSeq->Clear();
 	}
 }
@@ -208,10 +214,12 @@ void TestPiece_t::FiberDamage(Slice_t* Slice)
 }
 void TestPiece_t::UpdateMaxStress()
 {
+	//printf("TestPiece:Updating MaxStress\n");
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
 		while (!Slice[s]->ToUpdate->Empty())
 		{
+			printf("TestPiece:Slice %u not empty\n", s);
 			auto Node = Slice[s]->ToUpdate->Front();
 			Slice[s]->ToUpdate->Pop();
 
@@ -228,6 +236,7 @@ void TestPiece_t::UpdateMaxStress()
 				NodeU->MaxStress = std::min(NodeU->MaxStress, StressMax);
 				this->Hexa->Capablity[StackU] += NodeU->MaxStress;
 			}
+			StressMax = 0;
 
 			for (int StackL = s + 1; StackL < SlicesMax; StackL++)
 			{
@@ -238,6 +247,11 @@ void TestPiece_t::UpdateMaxStress()
 				NodeL->MaxStress = std::min(NodeL->MaxStress, StressMax);
 				this->Hexa->Capablity[StackL] += NodeL->MaxStress;
 			}
+			Node->MaxStress = 0;//Now broken
+			
+			printf("TestPiece:Slice %u (%.2lf,%.2lf) MaxStress set to 0\n",s, Node->x * E6, Node->y * E6);
+			
+
 			DebugCounter[s]++;
 		}
 		//printf("Slice:%d Broken:%d\n",Slice,DebugCounter[Slice]);
@@ -560,6 +574,17 @@ void TestPiece_t::FindNeighbors(Slice_t* Slice)
 
 }
 
+void TestPiece_t::ShowSideCrackFront(Slice_t* Slice)
+{
+	auto& SideCrack = Slice->SideCrack;
+
+	PlanePos_t** Pos = new PlanePos_t* [3];
+
+	SideCrack->Front(Pos);
+
+	printf("%.2lf,%.2lf,%.2lf,%.2lf,%.2lf,%.2lf\n", Pos[0]->X, Pos[0]->Y, Pos[1]->X, Pos[1]->Y, Pos[2]->X, Pos[2]->Y);
+}
+
 double TestPiece_t::FindFiberLoadBaselineWithCrack(Slice_t* Slice)
 {
 	auto& Crack = Slice->Crack;
@@ -653,33 +678,19 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 			}
 		}
 		auto& Slice = TestPiece->Slice[s];
-		if (Slice->Crack != nullptr);
+		if (Slice->Crack != nullptr)
+		{
+			//printf("FailureReport:Slice %u a %.2lf\n", s, Slice->Crack->Len()*E6);
+		}
 		else if (Slice->SideCrack != nullptr)
 		{
-			auto d0 = TestPiece->R0 * 2;
+			PlanePos_t** Pos = new PlanePos_t* [3];
 
-			auto& b = Slice->SideCrack->b;
-			auto& c = Slice->SideCrack->c;
-			auto& Orient = Slice->SideCrack->Orient;
-			auto& r = Slice->SideCrack->R;
+			Slice->SideCrack->Front(Pos);
 
-			//printf("FailureReport:Slice %u b %.2lf c %.2lf Orient %.2lf R %.2lf\n", s, b * E6, c * E6, Orient, r * E6);
-			auto bx = (r - b) * cos(-pi / 2 - Orient) / d0;
-			auto by = (r - b) * sin(-pi / 2 - Orient) / d0;
-			auto bPos = new PlanePos_t(bx, by);
-
-			auto ThetaC = 2 * asin(c / (2 * r));
-			auto cx = r * cos(-pi / 2 + ThetaC - Orient) / d0;
-			auto cy = r * sin(-pi / 2 + ThetaC - Orient) / d0;
-			auto cPos = new PlanePos_t(cx, cy);
-
-			auto c2x = r * cos(-pi / 2 - ThetaC - Orient) / d0;
-			auto c2y = r * sin(-pi / 2 - ThetaC - Orient) / d0;
-			auto c2Pos = new PlanePos_t(c2x, c2y);
-
-			CrackFronts[s]->Push(bPos);
-			CrackFronts[s]->Push(cPos);
-			CrackFronts[s]->Push(c2Pos);
+			CrackFronts[s]->Push(Pos[0]);
+			CrackFronts[s]->Push(Pos[1]);
+			CrackFronts[s]->Push(Pos[2]);
 
 			//push
 		}

@@ -33,6 +33,7 @@ double const& Crack_t::UpdateCrack(double Sigma)
 
 	if (Kb > KIC)
 	{
+		printf("Crack:Exceeding KIC\n");
 		a = MaxCrackLen+1*EM6;
 		return a;
 	}
@@ -79,6 +80,7 @@ double RectSideCrack_t::UpdateCrack(double Sigma)
 
 	if (Kb > KIC)
 	{
+		printf("RectSideCrack:Exceeding KIC\n");
 		a = MaxCrackLen + 1 * EM6;
 		return a;
 	}
@@ -126,6 +128,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 	if (Kb > KIC || Kc > KIC)
 	{
+		printf("SideCrack:Exceeding KIC\n");
 		b = MaxCrackLen + 1 * EM6;
 		return b;
 	}
@@ -154,7 +157,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	if (DeltaKb > 0) b += Cb * powl(DeltaKb, Mb) * dbFactor;
 	if (DeltaKc > 0) c += Cc * powl(DeltaKc, Mc) * dcFactor;
 
-	if (b / D < 0.1) c =  b;
+	if (b / D < 0.1) c = b;
 
 	//printf("SideCrack: b%.2lf c%.2lf\n", b * E6,c*E6);
 
@@ -185,6 +188,28 @@ double SideCrack_t::DistanceToCrackFront(double R, double Theta)
 double SideCrack_t::Len()
 {
 	return b;
+}
+void SideCrack_t::Front(PlanePos_t** Pos)
+{
+	auto& bPos = Pos[0];
+	auto& cPos = Pos[1];
+	auto& c2Pos = Pos[2];
+	auto& r = this->R;
+	auto d0 = r * 2;
+
+	auto bx = (r - b) * cos(-pi / 2 - Orient) / d0;
+	auto by = (r - b) * sin(-pi / 2 - Orient) / d0;
+	bPos = new PlanePos_t(bx, by);
+
+	auto ThetaC = 2 * asin(c / (2 * r));
+	auto cx = r * cos(-pi / 2 + ThetaC - Orient) / d0;
+	auto cy = r * sin(-pi / 2 + ThetaC - Orient) / d0;
+	cPos = new PlanePos_t(cx, cy);
+
+	auto c2x = r * cos(-pi / 2 - ThetaC - Orient) / d0;
+	auto c2y = r * sin(-pi / 2 - ThetaC - Orient) / d0;
+	c2Pos = new PlanePos_t(c2x, c2y);
+
 }
 void Crack_t::ParametersCopying(CrackInit_t Init)
 {

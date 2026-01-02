@@ -104,6 +104,8 @@ private:
 
 	void FindNeighbors(Slice_t*);
 
+	void ShowSideCrackFront(Slice_t*);
+
 	void ParametersCopying(TestPieceInit_t Init);
 	void HexaInitReady(TestPieceInit_t Init);
 
@@ -141,14 +143,6 @@ private:
 	bool HasResult;
 	FailureReport_t* Result;
 
-};
-class PlanePos_t
-{
-public:
-	PlanePos_t(PlanePos_t& From) : X(From.X), Y(From.Y), R(From.R), R2(From.R2), Theta(From.Theta) {};
-	PlanePos_t(double X, double Y) : X(X), Y(Y), R(sqrt(X* X + Y * Y)), R2(R* R), Theta(atan2(Y, X) * 180 / 3.14 + 180) {};
-
-	double X, Y, R, R2, Theta;
 };
 class FailureReport_t
 {
