@@ -11,7 +11,7 @@
 #include <random>
 
 constexpr unsigned int NeighberMax = 6;
-constexpr unsigned int LayerMax = 20;
+constexpr unsigned int LayerMax = 23;
 
 constexpr unsigned int StackPerThread = SlicesMax / ThreadMax;
 
@@ -35,6 +35,7 @@ public:
 	unsigned int Layer;
 	unsigned int Order;
 	unsigned int Index;
+	unsigned int SIndex;
 
 	Node_t* Neighbors[NeighberMax];
 	unsigned int NeighborCount;
@@ -54,12 +55,15 @@ public:
 	bool Broken;
 
 	bool OverBoarder;
+
+	bool Overload;
 };
 
 class HexaInit_t
 {
 public:
-	double R0, SpecimenRadious, X0, Y0;
+	double R0, SpecimenRadious, X0;
+	unsigned int YLayer;
 	bool Rect;
 	double Vf;
 	double mf, Sigma0, L, Lg;
@@ -110,7 +114,9 @@ private:
 	double SlidingStrength0;
 	unsigned int CrackShape;
 	bool Rect;
-	double X0, Y0;
+	double X0;
+	unsigned int YLayer;
+	double YUpper, YLower;
 	CrackManagerInit_t* CrackManagerInit;
 };
 

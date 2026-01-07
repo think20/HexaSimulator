@@ -6,9 +6,9 @@ void TestPiece_t::ParametersCopying(TestPieceInit_t Init)
 	L = Init.L;
 	SpecimenRadious = Init.SpecimenRadious;
 	X0 = Init.X0;
-	Y0 = Init.Y0;
-	Vm = Init.Vm;
+	YLayer = Init.YLayer;
 	Vf = Init.Vf;
+	Vm = 1 - Vf;
 	Em = Init.Em;
 	Ef = Init.Ef;
 	FiberLoadFactor = Ef / (Ef * Vf + Em * Vm);
@@ -37,7 +37,7 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit->SpecimenRadious = Init.SpecimenRadious;
 	HexaInit->Rect = Init.Rect;
 	HexaInit->X0 = Init.X0;
-	HexaInit->Y0 = Init.Y0;
+	HexaInit->YLayer = Init.YLayer;
 	HexaInit->Vf = Init.Vf;
 	HexaInit->mf = Init.mf;
 	HexaInit->Sigma0 = Init.Sigma0;
@@ -53,7 +53,7 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit->SpecimenRadious = Init.SpecimenRadious;
 	HexaInit->Em = Init.Em;
 	HexaInit->Ef = Init.Ef;
-	HexaInit->Vm = Init.Vm;
+	HexaInit->Vm = this->Vm;
 	HexaInit->SigmamMax = SigmamMax;
 	HexaInit->KLow = Init.KLow;
 	HexaInit->KIC = Init.KIC;
@@ -71,31 +71,43 @@ Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 {
 	this->Hexa = Hexa;
 	this->Slice = Slice;
-	this->Nodes = new TVector_t<Node_t*>(Hexa->NodeCount[Slice] + 10);
+	this->NodeCount = Hexa->NodeCount[Slice];
+	this->Nodes = new TVector_t<Node_t*>(this->NodeCount + 10);
+	unsigned int SIndex = 0;
 	for (unsigned int Index = 1; Index < NodeMax; Index++)
 	{
 		auto& Node = Hexa->Nodes[Slice][Index];
 		if (!Node->OverBoarder)
 		{
-			Nodes->Push(Node);
+			Node->SIndex = SIndex++;
+			this->Nodes->Push(Node);
+			//if (Slice == 0)
+				//printf("Slice:%.2lf,%.2lf,%.2lf,%.2lf\n", Node->x * E6, Node->y * E6, Node->r*E6, Node->theta*180/3.14);
 		}
 	}
 	this->Capablity = Hexa->Capablity[Slice];
 	this->Crack = Hexa->CrackManager->Crack[Slice];
 	this->RectSideCrack = Hexa->CrackManager->RectSideCrack[Slice];
 	this->SideCrack = Hexa->CrackManager->SideCrack[Slice];
-	this->NodeCount = Hexa->NodeCount[Slice];
+
 
 	this->Visited = new int64_t[NodeMax];
 	for (auto n = 0; n < NodeMax; n++)
 		this->Visited[n] = 0;
-	
-	this->Color = 0;
 
-	this->OverLoadNodes = new TQueue_t<Node_t*>(NodeMax);
-	this->BFSSeq = new TQueue_t<LLSNode_t>(NodeMax);
-	this->AnsSeq = new TVector_t<LLSNode_t>(NodeMax);
-	this->ToUpdate = new TQueue_t<Node_t*>(NodeMax);
+	this->Color = 1; //if Color is 0,the fist overload node would have no neighbor to visit
+
+	this->OverLoadNodes = new TVector_t<Node_t*>(this->NodeCount+10);
+	this->BFSSeq = new TQueue_t<LLSNode_t>(this->NodeCount+10);
+	this->AnsSeq = new TVector_t<LLSNode_t>(this->NodeCount+10);
+	this->ToUpdate = new TQueue_t<Node_t*>(this->NodeCount+10);
+
+	this->Father = new unsigned int[this->NodeCount+10];
+
+	for (auto i = 0; i < this->NodeCount; i++)
+		this->Father[i] = i;
+
+	this->LoadtoTransfer = new uint64_t[this->NodeCount+10];
 }
 TestPiece_t::TestPiece_t(TestPieceInit_t Init)
 {

@@ -34,17 +34,23 @@ public:
 	int64_t* Visited;
 	int64_t Color;
 
-	TQueue_t<Node_t*>* OverLoadNodes;
+	TVector_t<Node_t*>* OverLoadNodes;
 	TQueue_t<LLSNode_t>* BFSSeq;
 	TVector_t<LLSNode_t>* AnsSeq;
 	TQueue_t<Node_t*>* ToUpdate;
+
+	unsigned int* Father;
+	uint64_t* LoadtoTransfer;
+
+	unsigned int FindAncestor(unsigned int);
 };
 class TestPieceInit_t
 {
 public:
-	double R0, L, SpecimenRadious, X0, Y0;
+	double R0, L, SpecimenRadious, X0;
+	unsigned int YLayer;
 
-	double Vm, Vf, Em, Ef;
+	double Vf, Em, Ef;
 
 	double Alpham, Alphaf, Nium, Niuf;
 	double DeltaT, dint;
@@ -85,7 +91,7 @@ private:
 	void FiberLoad(Slice_t*, unsigned int);
 
 	void LoadDistribute(Slice_t*,unsigned int,unsigned int);
-	void LoadRedistribute(Slice_t*);
+	void LoadRedistribute(Slice_t*,unsigned int,unsigned int);
 	void FiberDamage(Slice_t*);
 
 	void UpdateMaxStress();
@@ -94,6 +100,9 @@ private:
 	void RectSideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void SideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
+
+	bool LLSFiberOverload(Slice_t*, unsigned int, unsigned int);
+
 	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
 	double FindFiberLoadBaseline(Slice_t*);
 	void SetFiberMinimumStress(Slice_t*, Slice_t*);
@@ -102,7 +111,7 @@ private:
 	double FindFiberLoadBaselineWithRectSideCrack(Slice_t*);
 	double FindFiberLoadBaselineWithSideCrack(Slice_t*);
 
-	void FindNeighbors(Slice_t*);
+	void FindNeighbors(Slice_t*,unsigned int,unsigned int);
 
 	void ShowSideCrackFront(Slice_t*);
 
@@ -121,7 +130,8 @@ private:
 	bool Ready;
 	unsigned int SyncTotalStep;
 
-	double R0, L, SpecimenRadious, X0, Y0;
+	double R0, L, SpecimenRadious, X0;
+	unsigned int YLayer;
 
 	double Vm, Vf, Em, Ef;
 	double FiberLoadFactor, MatrixLoadFactor;

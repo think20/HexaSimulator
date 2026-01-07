@@ -79,6 +79,10 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 	{
 		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
 		NodeNow = new Node_t;
+	}
+	for (unsigned int Order = 1; Order <= 6 * (Layer - 1); Order++)
+	{
+		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
 
 		NodeNow->Slice = Slice;
 
@@ -92,6 +96,7 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 		if (Node == 1)
 		{
 			AddNeighbor(Nodes, Convert31(Layer, Edge, Node), Convert31(Layer - 1, Edge, Node));
+			AddNeighbor(Nodes, Convert21(Layer, Order), Convert21(Layer, Order - 1));// Node 1 try to neighbor Node 5 before it is generated. Neighbor Nodes after everyone generated
 		}
 		else
 		{
@@ -123,9 +128,9 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 			NodeNow->FiberHealth = FiberHealthMax;*/
 
 			auto Overboarder = [&]{
-				//if (Slice == 0) printf("Hexa:x=%.2lf,y=%.2lf,X0=%.2lf,Y0=%.2lf,R1=%.2lf\n", NodeNow->x * E6, NodeNow->y * E6, X0 * E6, Y0 * E6, R1 * E6);
+				//if (Slice == 0) printf("Hexa:x=%.2lf,y=%.2lf,X0=%.2lf,YLayer=%.2lf,R1=%.2lf\n", NodeNow->x * E6, NodeNow->y * E6, X0 * E6, YLayer * E6, R1 * E6);
 				if (!Rect) return (NodeNow->r > SpecimenRadious - R1);
-				else return((NodeNow->x < -X0/2 + R1) || (NodeNow->x > X0/2 - R1) || (NodeNow->y < -Y0/2 + R1) || (NodeNow->y > Y0/2 - R1));
+				else return((NodeNow->x < -X0/2 + R1) || (NodeNow->x > X0/2 - R1) || (NodeNow->y < -YLower + R1) || (NodeNow->y > YUpper - R1));
 				};
 
 
@@ -134,6 +139,7 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 		}
 	}
 
+	//Set Position
 	for (unsigned int Order = 1; Order <= 6 * (Layer - 1); Order++)
 	{
 		Node_t*& NodeNow = Nodes[StartNode + Order - 1];
@@ -158,13 +164,12 @@ void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 			*/
 		auto Overboarder = [&] {
 			if (!Rect) return (NodeNow->r > SpecimenRadious - R1);
-			else return((NodeNow->x < -X0 / 2 + R1) || (NodeNow->x > X0 / 2 - R1) || (NodeNow->y < -Y0 / 2 + R1) || (NodeNow->y > Y0 / 2 - R1));
+			else return((NodeNow->x < -X0 / 2 + R1) || (NodeNow->x > X0 / 2 - R1) || (NodeNow->y < -YLower + R1) || (NodeNow->y > YUpper - R1));
 			};
 		if (Overboarder()) NodeNow->OverBoarder = true;
 		else (NodeCount[Slice])++;
 	}
 }
-
 void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 {
 	std::random_device Seed;
@@ -251,8 +256,12 @@ unsigned int Hexa_t::Convert31(const unsigned int& Layer, const unsigned int& Ed
 unsigned int Hexa_t::Convert21(const unsigned int& Layer, const unsigned int& Order)
 {
 	if (Layer == 1) return(1);
+	int FilteredOrder = Order;
+	if (FilteredOrder == 0)
+		FilteredOrder = (Layer - 1) * 6;
+
 	unsigned int Edge, Node;
-	Convert23(Layer, Order, Edge, Node);
+	Convert23(Layer, FilteredOrder, Edge, Node);
 	unsigned int Index = Convert31(Layer, Edge, Node);
 	return(Index);
 }
@@ -272,7 +281,7 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	SpecimenRadious = Init.SpecimenRadious;
 	Rect = Init.Rect;
 	X0 = Init.X0;
-	Y0 = Init.Y0;
+	YLayer = Init.YLayer;
 	Vf = Init.Vf;
 	mf = Init.mf * Init.ScatterDecay;
 	SigmaL = Init.Sigma0 * Init.StrengthDecay * pow(Init.L, -1.0 / mf) * pow(Init.Lg, 1.0 / mf);
@@ -331,6 +340,9 @@ Hexa_t::Hexa_t(HexaInit_t Init)
 		Capablity[s] = 0;
 
 	this->CrackManager = new CrackManager_t(*CrackManagerInit);
+
+	this->YUpper = (2 * (YLayer / 2) + 1) * R1 + 10 * EM6; //2(Layer)R1 for real distance,+1R1 for program to -1,10*EM6->a liitle clearance
+	this->YLower = (2 * (YLayer / 2 - 1 + YLayer % 2) + 1) * R1 + 10 * EM6;
 
 	this->HexaGenerateP(); //RAII
 }

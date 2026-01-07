@@ -95,7 +95,6 @@ double RectSideCrack_t::UpdateCrack(double Sigma)
 	}
 	double dadn = Cb * powl(deltaKb, Mb);//m
 
-
 	a += dadn;
 
 	return a;

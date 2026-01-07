@@ -48,7 +48,8 @@ public:
 	unsigned int ID;
 	char* CompositeName;
 	bool Rect;
-	double Vf, OffsetK, OffsetB, SpecimenRadious, X0, Y0;
+	double Vf, OffsetK, OffsetB, SpecimenRadious, X0;
+	unsigned int YLayer;
 	unsigned int FiberID, MatrixID;
 	double SlidingStrength0;
 	double DeltaT, dint;
