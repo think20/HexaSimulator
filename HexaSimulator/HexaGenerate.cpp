@@ -288,6 +288,9 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	SlidingStrength0 = Init.SlidingStrength0;
 
 	CrackShape = Init.CrackShape;
+	DegTauN = Init.DegTauN; DegTauD = Init.DegTauD;
+	DegSigN = Init.DegSigN; DegSigD = Init.DegSigD;
+	DegT = Init.DegT;
 
 	//printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
 }

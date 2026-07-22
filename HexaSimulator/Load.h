@@ -4,8 +4,11 @@
 #include "Hexa.h"
 #include "TDataStructure.h"
 
-constexpr unsigned int LLSIMax = 3;
-constexpr double LLSFactor[LLSIMax + 1] = { 0,3,2.1 };
+// LLS i=1: only ring-1 neighbors (FEM: ring-2 SCF < 2%, negligible)
+// Uniform load sharing among 6 ring-1 neighbors preserves force balance
+// No artificial iteration limit — convergence is physically determined
+constexpr unsigned int LLSIMax = 1;
+constexpr double LLSFactor[LLSIMax + 1] = { 0, 1 };
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 class LLSNode_t
@@ -65,6 +68,8 @@ public:
 	double MaxLoadRatio;
 	double FiberOverloadFactor;
 
+	unsigned int LoadSharingModel; //0=LLS,1=GLS
+
 	bool Rect;
 	double mf, Sigma0, Lg;
 	double StrengthDecay, ScatterDecay;
@@ -75,6 +80,7 @@ public:
 	double* Cm;
 	double* Mm;
 	unsigned int OrientDistributionModel;
+	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 };
 
 class TestPiece_t
@@ -95,6 +101,7 @@ private:
 	void FiberDamage(Slice_t*);
 
 	void UpdateMaxStress();
+	void UpdateDegradation(unsigned int Cycle);
 
 	void CrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
 	void RectSideCrackPlaneLoadDistribute(Slice_t*, unsigned int, unsigned int);
@@ -102,6 +109,7 @@ private:
 	void NonCrackLoadDistribute(Slice_t*, unsigned int, unsigned int);
 
 	bool LLSFiberOverload(Slice_t*, unsigned int, unsigned int);
+	bool GLSFiberOverload(Slice_t*, unsigned int, unsigned int);
 
 	void SliceFiberOverload(Slice_t*, unsigned int,unsigned int, double);
 	double FindFiberLoadBaseline(Slice_t*);
@@ -146,6 +154,10 @@ private:
 
 	double MaxLoadRatio; //0.53
 	double FiberOverloadFactor; // by trial,100~1000, 500 is good
+
+	unsigned int LoadSharingModel; //0=LLS,1=GLS
+	double SlidingStrength0;
+	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 
 	HexaInit_t* HexaInit;
 

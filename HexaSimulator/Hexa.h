@@ -78,6 +78,7 @@ public:
 	double* Cm;
 	double* Mm;
 	unsigned int OrientDistributionModel;
+	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 };
 class Hexa_t
 {
@@ -112,6 +113,7 @@ private:
 	double Vf;
 	double mf, SigmaL;
 	double SlidingStrength0;
+	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 	unsigned int CrackShape;
 	bool Rect;
 	double X0;

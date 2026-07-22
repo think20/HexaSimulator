@@ -17,18 +17,15 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto ResultC = TestPiece[t]->FiberLoadP(MaxCycle);
-		Report[t] = new FailureReport_t(ResultC);
-
-		//auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
-		//Report[t + TestCount] = new FailureReport_t(ResultS);
+		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
+		Report[t + TestCount] = new FailureReport_t(ResultS);
 		printf("Complete!\n");
 	}
 }
 void TestManager_t::SaveResults()
 {
-	//OutputManager->SaveBasicResults();
-	//OutputManager->SaveFractures();
+	OutputManager->SaveBasicResults();
+	OutputManager->SaveFractures();
 }
 void TestManager_t::AssembleTestPiece(unsigned int TestID)
 {
@@ -47,6 +44,7 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->MaxLoadRatio = NowTest->MaxLoadRatio;
 	NowInit->FiberOverloadFactor = NowTest->FiberOverloadFactor;
 	NowInit->OrientDistributionModel = NowTest->OrientDistributionModel;
+	NowInit->LoadSharingModel = NowTest->LoadSharingModel;
 
 	NowInit->Vf = NowComposite->Vf;
 	//OffsetK and B not simulated yet;
@@ -57,6 +55,9 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->SlidingStrength0 = NowComposite->SlidingStrength0;
 	NowInit->DeltaT = NowComposite->DeltaT;
 	NowInit->dint = NowComposite->dint;
+	NowInit->DegTauN = NowComposite->DegTauN; NowInit->DegTauD = NowComposite->DegTauD;
+	NowInit->DegSigN = NowComposite->DegSigN; NowInit->DegSigD = NowComposite->DegSigD;
+	NowInit->DegT = NowComposite->DegT;
 
 	NowInit->LoadStepMax = NowSpectra->LoadStepMax;
 	NowInit->LoadPercent = new unsigned int[NowInit->LoadStepMax];
@@ -223,7 +224,9 @@ void TestManager_t::InputManager_t::GetComposites()
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		unsigned int IsRect = 0;
-		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%lf,%u,%u,%u,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &IsRect, &NewComposite->X0, &NewComposite->YLayer, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint);
+		NewComposite->DegTauN = 0; NewComposite->DegTauD = 0;
+		NewComposite->DegSigN = 0; NewComposite->DegSigD = 0; NewComposite->DegT = 0;
+		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%lf,%u,%u,%u,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &IsRect, &NewComposite->X0, &NewComposite->YLayer, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint, &NewComposite->DegTauN, &NewComposite->DegTauD, &NewComposite->DegSigN, &NewComposite->DegSigD, &NewComposite->DegT);
 
 		//uint -> bool
 		NewComposite->Rect = IsRect == 1 ? true : false;
@@ -288,7 +291,8 @@ void TestManager_t::InputManager_t::GetTests()
 		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
-		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel);
+		NewTest->LoadSharingModel = 0; //default LLS for backward compatibility
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel,&NewTest->LoadSharingModel);
 		NewTest->MaxLoad *= E6;
 		NewTest->ICLCentral *= EM6;
 		NewTest->ICLSide *= EM6;
@@ -380,9 +384,9 @@ void TestManager_t::OutputManager_t::SaveBasicResults()
 	//fprintf(FOut, "Exp,S\n");
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
-		fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
+		//fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
 		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle);
-		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
+		fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
 
 	}
 
@@ -396,6 +400,7 @@ void TestManager_t::OutputManager_t::SaveFractures()
 
 		//Central Crack Fractures
 		//auto& Report = (TestManager->Report[t]);
+		
 		//Side Crack Fractures
 		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
 

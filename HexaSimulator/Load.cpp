@@ -37,6 +37,7 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 
 		//printf("Syncing TotalStep %u\n", this->SyncTotalStep);
 		this->UpdateMaxStress();
+		if (LoadCycle % 100 == 0) this->UpdateDegradation(LoadCycle);
 		//this->SyncLoadDistibute(LoadStep, LoadCycle);
 		//printf("Sync Finish\n");
 
@@ -123,18 +124,12 @@ void TestPiece_t::FiberLoad(Slice_t* Slice, unsigned int TotalStep)
 	unsigned int LoadStep = TotalStep % LoadStepMax;
 	unsigned int LoadCycle = TotalStep / LoadStepMax;
 	bool DebugOutput = false;
-	if (Slice->Slice == 0 && LoadStep == 13 && LoadCycle == 3000)
-		DebugOutput = true;
+	/*if (Slice->Slice == 0 && LoadStep == 13 && LoadCycle == 3000)
+		DebugOutput = true;*/
 
 	//Otherwise Distributed in sync
 	LoadDistribute(Slice, LoadStep, LoadCycle); 
-	if (DebugOutput)
-		for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
-			printf("%.2lf,%.2lf,%lld\n", (*Node)->r / (2 * R0), (*Node)->theta * 180 / pi, (*Node)->Load);
 	LoadRedistribute(Slice, LoadStep, LoadCycle);
-	if (DebugOutput)
-		for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
-			printf("%.2lf,%.2lf,%lld\n", (*Node)->r / (2 * R0), (*Node)->theta * 180 / pi, (*Node)->Load);
 	FiberDamage(Slice);
 	return;
 }
@@ -159,13 +154,72 @@ void TestPiece_t::LoadRedistribute(Slice_t* Slice, unsigned int LoadStep, unsign
 	for (auto i = 0; i < Slice->NodeCount; i++)
 		Slice->Father[i] = i;
 
-	while (LLSFiberOverload(Slice, LoadStep, LoadCycle) == true);
+	if (LoadSharingModel == 1) //GLS
+	{
+		while (GLSFiberOverload(Slice, LoadStep, LoadCycle) == true);
+	}
+	else //LLS default
+	{
+		while (LLSFiberOverload(Slice, LoadStep, LoadCycle) == true);
+	}
+}
+void TestPiece_t::UpdateDegradation(unsigned int Cycle)
+{
+	if (DegTauN <= 0 && DegSigN <= 0) return; //no degradation configured
+
+	double TauFactor = 1.0, SigFactor = 1.0;
+	double Arrhenius = 1.0;
+
+	if (DegT > 0) //temperature acceleration
+	{
+		constexpr double QoverR = 5000.0; //K
+		constexpr double Tref = 298.0;
+		Arrhenius = exp(QoverR * (1.0 / Tref - 1.0 / DegT));
+	}
+
+	if (DegTauN > 0 && DegTauD > 0)
+		TauFactor = 1.0 - DegTauD * Arrhenius * (1.0 - exp(-double(Cycle) / DegTauN));
+	if (DegSigN > 0 && DegSigD > 0)
+		SigFactor = 1.0 - DegSigD * (1.0 - exp(-double(Cycle) / DegSigN));
+
+	if (TauFactor < 0.01) TauFactor = 0.01;
+	if (SigFactor < 0.01) SigFactor = 0.01;
+
+	for (unsigned int s = 0; s < SlicesMax; s++)
+	{
+		int64_t OldCap = this->Hexa->Capablity[s];
+		for (auto Node = Slice[s]->Nodes->Begin(); Node != Slice[s]->Nodes->End(); Node++)
+		{
+			if ((*Node)->Broken) continue;
+
+			if (DegTauN > 0)
+				(*Node)->SlidingStrength = int64_t(double(SlidingStrength0) * TauFactor);
+
+			if (DegSigN > 0)
+			{
+				int64_t NewStrength = int64_t(double((*Node)->Strength) * SigFactor / 1.0);
+				if (NewStrength < (*Node)->Strength)
+				{
+					(*Node)->Strength = NewStrength;
+					if ((*Node)->MaxStress > NewStrength)
+						(*Node)->MaxStress = NewStrength;
+				}
+			}
+		}
+		//Capablity must be recalculated
+		int64_t NewCap = 0;
+		for (auto Node = Slice[s]->Nodes->Begin(); Node != Slice[s]->Nodes->End(); Node++)
+		{
+			if (!(*Node)->Broken) NewCap += (*Node)->MaxStress;
+		}
+		this->Hexa->Capablity[s] = NewCap;
+	}
 }
 void TestPiece_t::FiberDamage(Slice_t* Slice)
 {
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
-		if ((*Node)->Load == (*Node)->Strength && (!(*Node)->Broken))
+		if ((*Node)->Load >= (*Node)->Strength && (!(*Node)->Broken))
 		{
 			(*Node)->Broken = true;
 			Slice->ToUpdate->Push(*Node);
@@ -439,6 +493,48 @@ void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, 
 		}
 			
 	}
+}
+bool TestPiece_t::GLSFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
+{
+	int64_t TotalExcess = 0;
+	unsigned int CanAcceptCount = 0;
+
+	// Pass 1: find overloaded fibers, cap them, sum excess
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+		if ((*Node)->Broken) continue;
+		if ((*Node)->Load > (*Node)->MaxStress)
+		{
+			TotalExcess += (*Node)->Load - (*Node)->MaxStress;
+			(*Node)->Load = (*Node)->MaxStress;
+		}
+		if ((*Node)->Load < (*Node)->MaxStress)
+			CanAcceptCount++;
+	}
+
+	if (TotalExcess == 0) return false;
+	if (CanAcceptCount == 0) return false;
+
+	// Pass 2: distribute equally (GLS: entire slice is one pool)
+	int64_t BaseShare = TotalExcess / CanAcceptCount;
+	int64_t Remainder = TotalExcess % CanAcceptCount;
+	unsigned int ExtraGiven = 0;
+
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+	{
+		if ((*Node)->Broken) continue;
+		if ((*Node)->Load < (*Node)->MaxStress)
+		{
+			(*Node)->Load += BaseShare;
+			if (ExtraGiven < Remainder)
+			{
+				(*Node)->Load += 1;
+				ExtraGiven++;
+			}
+		}
+	}
+
+	return true; // may have created new overloads, caller loops
 }
 bool TestPiece_t::LLSFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
 {

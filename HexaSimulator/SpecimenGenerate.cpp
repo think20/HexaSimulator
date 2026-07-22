@@ -29,6 +29,11 @@ void TestPiece_t::ParametersCopying(TestPieceInit_t Init)
 	CrackShape = Init.CrackShape;
 	MaxLoadRatio = Init.MaxLoadRatio;
 	FiberOverloadFactor = Init.FiberOverloadFactor;
+	LoadSharingModel = Init.LoadSharingModel;
+	SlidingStrength0 = Init.SlidingStrength0;
+	DegTauN = Init.DegTauN; DegTauD = Init.DegTauD;
+	DegSigN = Init.DegSigN; DegSigD = Init.DegSigD;
+	DegT = Init.DegT;
 }
 void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 {
@@ -66,6 +71,9 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	}
 	HexaInit->CrackShape = Init.CrackShape;
 	HexaInit->OrientDistributionModel = Init.OrientDistributionModel;
+	HexaInit->DegTauN = Init.DegTauN; HexaInit->DegTauD = Init.DegTauD;
+	HexaInit->DegSigN = Init.DegSigN; HexaInit->DegSigD = Init.DegSigD;
+	HexaInit->DegT = Init.DegT;
 }
 Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 {

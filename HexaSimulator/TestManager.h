@@ -53,6 +53,7 @@ public:
 	unsigned int FiberID, MatrixID;
 	double SlidingStrength0;
 	double DeltaT, dint;
+	double DegTauN, DegTauD, DegSigN, DegSigD, DegT; //degradation: N_tau, D_tau, N_sig, D_sig, T(K), 0=disabled
 };
 class Spectra_t
 {
@@ -76,6 +77,7 @@ public:
 	double MaxLoadRatio; 
 	double FiberOverloadFactor;
 	unsigned int OrientDistributionModel;
+	unsigned int LoadSharingModel; //0=LLS,1=GLS
 };
 class TestManager_t
 {
