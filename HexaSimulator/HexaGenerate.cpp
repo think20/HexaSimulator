@@ -323,6 +323,7 @@ Hexa_t::Hexa_t(HexaInit_t Init)
 	ParametersCopying(Init);
 	CrackManagerInitReady(Init);
 
+
 	//printf("FiberStrength:%.2lfMPa\n", Init.R0);
 
 	this->Nodes = new Node_t * *[SlicesMax];
