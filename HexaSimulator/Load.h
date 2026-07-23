@@ -9,6 +9,7 @@
 // No artificial iteration limit — convergence is physically determined
 constexpr unsigned int LLSIMax = 1;
 constexpr double LLSFactor[LLSIMax + 1] = { 0, 1 };
+constexpr double LLSEfficiency = 0.60; //fraction of excess load transferred to neighbors; rest absorbed by matrix plasticity
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 class LLSNode_t
@@ -81,6 +82,9 @@ public:
 	double* Mm;
 	unsigned int OrientDistributionModel;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
+	double SmallCrackCB;
+	double WakeC0;
+	double TipSCF, TipZone;
 };
 
 class TestPiece_t
@@ -158,6 +162,8 @@ private:
 	unsigned int LoadSharingModel; //0=LLS,1=GLS
 	double SlidingStrength0;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
+	double WakeC0;
+	double TipSCF, TipZone;
 
 	HexaInit_t* HexaInit;
 

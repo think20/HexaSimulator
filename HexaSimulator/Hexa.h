@@ -79,6 +79,7 @@ public:
 	double* Mm;
 	unsigned int OrientDistributionModel;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
+	double SmallCrackCB;
 };
 class Hexa_t
 {

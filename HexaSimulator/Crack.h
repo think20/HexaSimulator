@@ -98,6 +98,7 @@ public:
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
+	double SmallCrackCB;
 };
 
 class FailureReport_t;
@@ -125,6 +126,7 @@ private:
 	double KLow, KIC;
 	double* Cm;
 	double* Mm;
+	double SmallCrackCB;
 };
 class CrackManagerInit_t
 {
@@ -137,6 +139,7 @@ public:
 	double* Cm;
 	double* Mm;
 	unsigned int OrientDistributionModel;
+	double SmallCrackCB;
 };
 class CrackManager_t
 {

@@ -287,7 +287,7 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 
 	if (CrackLen > Crack->MaxCrackLen)
 	{
-		//printf("Meow!\n");
+		printf("FAIL|Crack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, Crack->MaxCrackLen*E6);
 		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
 	}
 	if (Crack->Yield)
@@ -350,6 +350,7 @@ void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int 
 
 	if (CrackLen > RectSideCrack->MaxCrackLen)
 	{
+		printf("FAIL|RectSideCrack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, RectSideCrack->MaxCrackLen*E6);
 		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
 	}
 	if (RectSideCrack->Yield)
@@ -386,63 +387,92 @@ void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int 
 }
 void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
 {
-	double SliceFiberLoadFactor = FiberLoadFactor; //default
-	double SliceMatrixLoadFactor = MatrixLoadFactor;
 	int64_t CompositeLoad = int64_t((LoadPercent[LoadStep]) * MaxLoad / 100.0);
-
 	auto& SideCrack = Slice->SideCrack;
 
-	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor); // Far field load, not local
-
-	//if (Slice->Slice == 0 && LoadCycle % 500 == 0 && LoadStep == 13)
-		//printf("TestPiece:%.4lf\n", CrackLen / SpecimenRadious);
-
+	// Crack growth
+	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor);
 	if (CrackLen > SideCrack->MaxCrackLen)
 	{
+		printf("FAIL|SideCrack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, SideCrack->MaxCrackLen*E6);
 		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
 	}
 
-	double FullCompositeArea = pi * SpecimenRadious * SpecimenRadious;
-	double MatrixArea = (FullCompositeArea - SideCrack->S) * Vm;
-	double FiberArea = Vf * FullCompositeArea;
-	double SliceVf = FiberArea / (FiberArea + MatrixArea);
-	double SliceVm = 1 - SliceVf;
+	// Characteristic crack length c0 (Curtin 2001, thesis Eq 9: 100-200um)
+	double c0 = WakeC0 * EM6;
 
-	SliceFiberLoadFactor = Ef / (Ef * SliceVf + Em * SliceVm);
-	SliceMatrixLoadFactor = Em / (Ef * SliceVf + Em * SliceVm);
+	// Intact-zone fiber stress: mixing rule (elastic, matrix intact)
+	double sigma_f_intact = double(CompositeLoad) * Ef / (Ef * Vf + Em * Vm);
 
-	double SliceMatrixLoad = SliceMatrixLoadFactor * CompositeLoad;
-	if (SliceMatrixLoad > SigmamMax)
+	// Wake-zone fiber stress: matrix fully cracked, load carried by fibers only
+	// Per Thouless (10a): T = const * sqrt(u), u ~ crack opening displacement
+	// At deep wake (Dis << -c0): u ~ u_max, fiber carries sigma_comp / Vf
+	double sigma_f_wake = double(CompositeLoad) / Vf;
+
+	// Matrix yield check: if sigma_f_intact exceeds the yield-equivalent level,
+	// matrix yields, transferring more load to fibers everywhere
+	double sigma_m_intact = double(CompositeLoad) * Em / (Ef * Vf + Em * Vm);
+	if (sigma_m_intact > SigmamMax)
 	{
 		double CompositeForce = double(CompositeLoad) * pi * SpecimenRadious * SpecimenRadious;
-		double MatrixForce = MatrixArea * SigmamMax;
+		double FullMatrixArea = Vm * pi * SpecimenRadious * SpecimenRadious;
+		double FullFiberArea = Vf * pi * SpecimenRadious * SpecimenRadious;
+		double MatrixForce = FullMatrixArea * SigmamMax;
 		double FiberForce = CompositeForce - MatrixForce;
-		double FiberLoad = FiberForce / FiberArea;
-		SliceFiberLoadFactor = FiberLoad / CompositeLoad;
+		sigma_f_intact = FiberForce / FullFiberArea;
+		// Wake: matrix carries zero in cracked zone; ensure sigma_f_wake >= sigma_f_intact
+		if (sigma_f_intact > sigma_f_wake) sigma_f_wake = sigma_f_intact;
 	}
 
-	SliceFiberOverload(Slice, LoadStep, LoadCycle, SliceFiberLoadFactor);
+	// Cap sigma_f_wake to physical maximum (fiber strength order)
+	if (sigma_f_wake > sigma_f_intact * 4.0)
+		sigma_f_wake = sigma_f_intact * 4.0;
 
-	double BaseLine = FindFiberLoadBaseline(Slice);
-	SliceFiberLoadFactor *= BaseLine;
-	int64_t Load = int64_t(CompositeLoad * SliceFiberLoadFactor);
+	double tip_zone = TipZone * EM6; // convert um to m
 
 	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
 	{
+		double Dis = Slice->SideCrack->DistanceToCrackFront((*Node)->r, (*Node)->theta);
 
-		auto& R = (*Node)->r;
-		auto& Theta = (*Node)->theta;
-		double Factor = 1;//default, Fiber not in Crack
+		if (Dis < -c0)
+		{
+			// Deep wake: matrix fully cracked, fiber takes full load
+			(*Node)->Load = int64_t(sigma_f_wake);
+		}
+		else if (Dis < 0.0)
+		{
+			// Transition zone: crack opening grows from 0 to u_max
+			// Fiber stress interpolates via sqrt(|Dis|/c0) (Thouless 10a: T ~ sqrt(u))
+			double ratio = sqrtl(-Dis / c0);
+			(*Node)->Load = int64_t(sigma_f_intact + (sigma_f_wake - sigma_f_intact) * ratio);
+		}
+		else
+		{
+			// Intact zone: standard mixing rule
+			(*Node)->Load = int64_t(sigma_f_intact);
+		}
 
-		double Dis = Slice->SideCrack->DistanceToCrackFront(R, Theta);
-		if (Dis < 0)
-			Factor = 1 + FiberOverloadFactor * sqrtl((-Dis));
-
-		(*Node)->Load = int64_t(Load * Factor);
-
-		//Load = k*u^1/2
+		// Crack-tip SCF: amplifies fiber stress in the crack WAKE near the front
+		// Wake fibers near crack front experience highest bridging stress
+		if (TipSCF > 1.0 && tip_zone > 0.0 && Dis < 0.0 && Dis > -tip_zone)
+		{
+			double decay = 1.0 - Dis / tip_zone; // 1 at crack front, 0 at zone edge
+			double scf = 1.0 + (TipSCF - 1.0) * decay;
+			(*Node)->Load = int64_t(double((*Node)->Load) * scf);
+		}
 	}
 
+	// Compute actual fiber capacity ratio from total fiber load / total fiber capacity
+	int64_t TotalFiberLoad = 0;
+	for (auto Node = Slice->Nodes->Begin(); Node != Slice->Nodes->End(); Node++)
+		TotalFiberLoad += (*Node)->Load;
+	double LoadRatio = double(TotalFiberLoad) / double(Slice->Capablity);
+	if (LoadRatio > MaxLoadRatio)
+	{
+		double CrackLen = Slice->SideCrack->Len();
+		printf("FAIL|SideCrack_LoadRatio|Sl=%u|Cy=%u|St=%u|Ratio=%.4f|MaxLR=%.2f|Cap=%lld|Load=%lld|CrackLen=%.1f\n", Slice->Slice, LoadCycle, LoadStep, LoadRatio, MaxLoadRatio, Slice->Capablity, TotalFiberLoad, CrackLen*E6);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+	}
 }
 void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
 {
@@ -619,9 +649,16 @@ bool TestPiece_t::LLSFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsign
 		Slice->BFSSeq->Clear();
 		Slice->Color++;
 
+		// Matrix plasticity absorbs (1-LLSEfficiency) of the excess load
+		Slice->LoadtoTransfer[Bench] = uint64_t(double(Slice->LoadtoTransfer[Bench]) * LLSEfficiency);
+		if (Slice->LoadtoTransfer[Bench] == 0) { Slice->AnsSeq->Clear(); continue; }
+
 		double LLSShare = 0;
 		for (auto LLSNeighborNode = Slice->AnsSeq->Begin(); LLSNeighborNode != Slice->AnsSeq->End(); LLSNeighborNode++)
 			LLSShare += LLSFactor[LLSNeighborNode->LLSIndex];
+
+		if (LLSShare <= 0.0) { Slice->AnsSeq->Clear(); continue; } //no neighbors can accept
+
 		for (auto LLSNeighborNode = Slice->AnsSeq->Begin(); LLSNeighborNode != Slice->AnsSeq->End(); LLSNeighborNode++)
 		{
 			auto NeighborNode = LLSNeighborNode->Node;
@@ -649,11 +686,7 @@ void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsi
 
 	if (LoadRatio > MaxLoadRatio)
 	{
-		/*printf("Overload at Slice %d at Cycle %d Step %d with AvgCap%.2lf,Load%.2lf,ExtLoad%.2lfMPa\n", Slice->Slice, LoadCycle, LoadStep, double(Slice->Capablity / Slice->NodeCount) * EM6, double(Load) * EM6, double(CompositeLoad) * EM6);
-		for (unsigned int s = 0; s < SlicesMax; s++)
-			printf("Slice:%u,Broken:%u\n", s, DebugCounter[s]);
-		system("pause");*/
-		//printf("%u,%.3lf\n",Slice->Slice, LoadRatio);
+		printf("FAIL|SliceFiberOverload|Sl=%u|Cy=%u|St=%u|Ratio=%.4f|MaxLR=%.2f|Cap=%lld|TotalLoad=%lld|NodeCount=%u\n", Slice->Slice, LoadCycle, LoadStep, LoadRatio, MaxLoadRatio, Slice->Capablity, TotalLoad, Slice->NodeCount);
 
 		double CrackLen = 0;
 		if (Slice->Crack != nullptr) CrackLen = Slice->Crack->Len();

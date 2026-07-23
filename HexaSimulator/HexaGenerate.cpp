@@ -316,6 +316,7 @@ void Hexa_t::CrackManagerInitReady(HexaInit_t Init)
 		CrackManagerInit->Mm[i] = Init.Mm[i];
 	}
 	CrackManagerInit->OrientDistributionModel = Init.OrientDistributionModel;
+	CrackManagerInit->SmallCrackCB = Init.SmallCrackCB;
 }
 Hexa_t::Hexa_t(HexaInit_t Init)
 {

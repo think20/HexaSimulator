@@ -127,7 +127,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 
 	if (Kb > KIC || Kc > KIC)
 	{
-		printf("SideCrack:Exceeding KIC\n");
+		printf("FAIL|SideCrack_KIC|b=%.1f|c=%.1f|Kb=%.1f|Kc=%.1f|KIC=%.1f\n", b*E6, c*E6, Kb, Kc, KIC);
 		b = MaxCrackLen + 1 * EM6;
 		return b;
 	}
@@ -156,7 +156,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	if (DeltaKb > 0) b += Cb * powl(DeltaKb, Mb) * dbFactor;
 	if (DeltaKc > 0) c += Cc * powl(DeltaKc, Mc) * dcFactor;
 
-	if (b / D < 0.1) c = b;
+	if (b / D < 0.1) c = b * SmallCrackCB;
 
 	//printf("SideCrack: b%.2lf c%.2lf\n", b * E6,c*E6);
 
@@ -270,6 +270,7 @@ void SideCrack_t::ParametersCopying(SideCrackInit_t Init)
 {
 	KLow = Init.KLow;
 	KIC = Init.KIC;
+	SmallCrackCB = Init.SmallCrackCB;
 	Cm = new double[2];
 	Mm = new double[2];
 	for (unsigned int i = 0; i < 2; i++)
@@ -344,6 +345,7 @@ void CrackManager_t::SideCrackInitReady(CrackManagerInit_t Init)
 	SideCrackInit = new SideCrackInit_t;
 	SideCrackInit->KLow = Init.KLow;
 	SideCrackInit->KIC = Init.KIC;
+	SideCrackInit->SmallCrackCB = Init.SmallCrackCB;
 	SideCrackInit->Cm = new double[2];
 	SideCrackInit->Mm = new double[2];
 	for (unsigned int i = 0; i < 2; i++)
@@ -401,7 +403,7 @@ SideCrack_t* CrackManager_t::CreateSideCrack(unsigned int Slice)
 		Orient = 0;
 
 	//printf("CrackManager:Orient:%.2lf\n", Orient);
-	auto NewSideCrack = new SideCrack_t(ICLSide, ICLSide, SpecimenRadious, Orient, *SideCrackInit);
+	auto NewSideCrack = new SideCrack_t(ICLSide, ICLSide * SideCrackInit->SmallCrackCB, SpecimenRadious, Orient, *SideCrackInit);
 	SideCrack[Slice] = NewSideCrack;
 	return NewSideCrack;
 }

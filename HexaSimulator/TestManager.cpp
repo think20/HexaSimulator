@@ -17,7 +17,9 @@ void TestManager_t::StartTests()
 	for (unsigned int t = 0; t < TestCount; t++)
 	{
 		printf("TestManager:Evaluating Test%u out of %u test(s)...", t, TestCount);
-		auto ResultS = TestPiece[t + TestCount]->FiberLoadP(MaxCycle);
+		// Rect specimens only create one TestPiece (at [t]); non-Rect creates two
+		auto Piece = TestPiece[t + TestCount] ? TestPiece[t + TestCount] : TestPiece[t];
+		auto ResultS = Piece->FiberLoadP(MaxCycle);
 		Report[t + TestCount] = new FailureReport_t(ResultS);
 		printf("Complete!\n");
 	}
@@ -58,6 +60,10 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->DegTauN = NowComposite->DegTauN; NowInit->DegTauD = NowComposite->DegTauD;
 	NowInit->DegSigN = NowComposite->DegSigN; NowInit->DegSigD = NowComposite->DegSigD;
 	NowInit->DegT = NowComposite->DegT;
+	NowInit->SmallCrackCB = NowComposite->SmallCrackCB;
+	NowInit->WakeC0 = NowTest->WakeC0;
+	NowInit->TipSCF = NowTest->TipSCF;
+	NowInit->TipZone = NowTest->TipZone;
 
 	NowInit->LoadStepMax = NowSpectra->LoadStepMax;
 	NowInit->LoadPercent = new unsigned int[NowInit->LoadStepMax];
@@ -226,7 +232,8 @@ void TestManager_t::InputManager_t::GetComposites()
 		unsigned int IsRect = 0;
 		NewComposite->DegTauN = 0; NewComposite->DegTauD = 0;
 		NewComposite->DegSigN = 0; NewComposite->DegSigD = 0; NewComposite->DegT = 0;
-		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%lf,%u,%u,%u,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &IsRect, &NewComposite->X0, &NewComposite->YLayer, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint, &NewComposite->DegTauN, &NewComposite->DegTauD, &NewComposite->DegSigN, &NewComposite->DegSigD, &NewComposite->DegT);
+		NewComposite->SmallCrackCB = 1.0;
+		sscanf(HeadlessData, "%lf,%lf,%lf,%lf,%u,%lf,%u,%u,%u,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &NewComposite->Vf, &NewComposite->OffsetK, &NewComposite->OffsetB, &NewComposite->SpecimenRadious, &IsRect, &NewComposite->X0, &NewComposite->YLayer, &NewComposite->FiberID, &NewComposite->MatrixID, &NewComposite->SlidingStrength0, &NewComposite->DeltaT, &NewComposite->dint, &NewComposite->DegTauN, &NewComposite->DegTauD, &NewComposite->DegSigN, &NewComposite->DegSigD, &NewComposite->DegT, &NewComposite->SmallCrackCB);
 
 		//uint -> bool
 		NewComposite->Rect = IsRect == 1 ? true : false;
@@ -292,7 +299,8 @@ void TestManager_t::InputManager_t::GetTests()
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		NewTest->LoadSharingModel = 0; //default LLS for backward compatibility
-		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u,%u", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel,&NewTest->LoadSharingModel);
+		NewTest->WakeC0 = 150.0; NewTest->TipSCF = 1.0; NewTest->TipZone = 0.0;
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u,%u,%lf,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel,&NewTest->LoadSharingModel,&NewTest->WakeC0,&NewTest->TipSCF,&NewTest->TipZone);
 		NewTest->MaxLoad *= E6;
 		NewTest->ICLCentral *= EM6;
 		NewTest->ICLSide *= EM6;
@@ -380,16 +388,27 @@ void TestManager_t::InputManager_t::GetNums(char* From, unsigned int* Dest, bool
 }
 void TestManager_t::OutputManager_t::SaveBasicResults()
 {
-	fprintf(FOut, "Name,PeakLoad,Exp,C,S\n");
-	//fprintf(FOut, "Exp,S\n");
+	fprintf(FOut, "Name,PeakLoad,DesiredLife,Life_C,Life_S,Breaks_C,Breaks_S\n");
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
-		//fprintf(FOut, "%s,%.2lf,%u,%u,%u,\n",TestManager->Test[t]->TestName,TestManager->Test[t]->MaxLoad*EM6, TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle, TestManager->Report[t + TestManager->TestCount]->Cycle);
-		//fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t]->Cycle);
-		fprintf(FOut, "%u,%u,\n", TestManager->Test[t]->DesiredLife, TestManager->Report[t + TestManager->TestCount]->Cycle);
-
+		auto CountBreaks = [](FailureReport_t* R) {
+			unsigned int Count = 0;
+			if (R == nullptr) return Count;
+			for (unsigned int s = 0; s < SlicesMax; s++)
+				Count += R->Fractures[s]->DebugGetSize();
+			return Count;
+		};
+		auto RC = TestManager->Report[t];
+		auto RS = TestManager->Report[t + TestManager->TestCount];
+		fprintf(FOut, "%s,%.0lf,%u,%u,%u,%u,%u\n",
+			TestManager->Test[t]->TestName,
+			TestManager->Test[t]->MaxLoad * EM6,
+			TestManager->Test[t]->DesiredLife,
+			RC ? RC->Cycle : 0,
+			RS ? RS->Cycle : 0,
+			CountBreaks(RC),
+			CountBreaks(RS));
 	}
-
 	fclose(FOut);
 }
 void TestManager_t::OutputManager_t::SaveFractures()
@@ -476,7 +495,7 @@ TestManager_t::TestManager_t()
 	Composite = new Composite_t* [MaxCompositeType];
 	Matrix = new Matrix_t* [MaxMatrixType];
 	Fiber = new Fiber_t* [MaxFiberType];
-	Report = new FailureReport_t* [MaxTestType];
+	Report = new FailureReport_t* [MaxTestType](); //value-initialized to nullptr
 
 	InputManager = new TestManager_t::InputManager_t(this);
 	OutputManager = new TestManager_t::OutputManager_t(this);

@@ -54,6 +54,7 @@ public:
 	double SlidingStrength0;
 	double DeltaT, dint;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT; //degradation: N_tau, D_tau, N_sig, D_sig, T(K), 0=disabled
+	double SmallCrackCB; //c/b ratio in small crack stage (b/D<0.1), default 1.0
 };
 class Spectra_t
 {
@@ -78,6 +79,9 @@ public:
 	double FiberOverloadFactor;
 	unsigned int OrientDistributionModel;
 	unsigned int LoadSharingModel; //0=LLS,1=GLS
+	double WakeC0; //characteristic crack wake length in um, Curtin 2001: 100-200
+	double TipSCF; //crack-tip fiber stress concentration factor, literature: 2-5
+	double TipZone; //crack-tip SCF zone half-width in um
 };
 class TestManager_t
 {
