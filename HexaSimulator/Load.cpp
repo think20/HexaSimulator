@@ -197,7 +197,14 @@ void TestPiece_t::UpdateDegradation(unsigned int Cycle)
 
 			if (DegSigN > 0)
 			{
-				int64_t NewStrength = int64_t(double((*Node)->Strength0) * SigFactor); // FIX: from the pristine strength (was compounding every 100 cycles)
+				// SELECTIVE, ratcheting-driven degradation: severity grows with the local off-axis
+				// angle -- high-twist fibres ratchet harder under cyclic loading and therefore
+				// lose strength faster. Normalised at the 7 deg threshold reported in the EFM
+				// paper; DegSigD is the saturated strength loss of a fibre sitting at 7 deg.
+				double ThetaSel = ((*Node)->TwistAngle > 0.0) ? ((*Node)->TwistAngle / 7.0) : 0.0;
+				if (ThetaSel > 3.0) ThetaSel = 3.0;
+				int64_t NewStrength = int64_t(double((*Node)->Strength0)
+					* (1.0 - DegSigD * ThetaSel * (1.0 - exp(-double(Cycle) / DegSigN))));
 				if (NewStrength < (*Node)->Strength)
 				{
 					(*Node)->Strength = NewStrength;
