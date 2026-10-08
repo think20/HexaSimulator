@@ -209,7 +209,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;
 		// Twist angle: θ = OffsetK * r/d0 + OffsetB (thesis Eq 2-2)
-		NodeNow->TwistAngle = OffsetK * NodeNow->r / (2.0 * R0) + OffsetB;
+		NodeNow->TwistAngle = OffsetK * NodeNow->r / R0 + OffsetB; // FIX 2026-10-08: abscissa is r/R0 (fibre RADIUS), not r/(2R0); the old form gave exactly half the measured off-axis angle
 		if (NodeNow->TwistAngle < 0.0) NodeNow->TwistAngle = 0.0;
 		if (!NodeNow->OverBoarder)
 		{
@@ -339,7 +339,7 @@ Hexa_t::Hexa_t(HexaInit_t Init)
 
 	for (unsigned int s = 0; s < SlicesMax; s++)
 	{
-		Nodes[s] = new Node_t * [NodeMax];
+		Nodes[s] = new Node_t * [NodeMax + 1]; // FIX 2026-10-08: node indices are 1-based (Nodes[1] is the first), so NodeMax+1 slots are required; the old NodeMax-sized array overflowed by one element on every run (caught by ASan as heap-buffer-overflow in GenerateLayer)
 		//std::cout << s << std::endl;
 	}
 
