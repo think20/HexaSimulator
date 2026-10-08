@@ -201,7 +201,15 @@ void TestPiece_t::UpdateDegradation(unsigned int Cycle)
 				// angle -- high-twist fibres ratchet harder under cyclic loading and therefore
 				// lose strength faster. Normalised at the 7 deg threshold reported in the EFM
 				// paper; DegSigD is the saturated strength loss of a fibre sitting at 7 deg.
-				double ThetaSel = ((*Node)->TwistAngle > 0.0) ? ((*Node)->TwistAngle / 7.0) : 0.0;
+				// THRESHOLD form (not a linear ramp): the observations show that off-axis angles
+				// below ThetaThresh have no significant effect on fibre overload, while above it
+				// the ratcheting damage grows. ThetaThresh is itself a scan-able quantity: 7 deg
+				// is the angle at which the measured breakpoint count surges, but the effective
+				// onset used by the model need not be exactly that value.
+				constexpr double ThetaThresh = 7.0;   // deg
+				constexpr double ThetaRef    = 4.8;   // deg: gives ThetaSel = 1 at F3's outermost fibre (11.8 deg)
+				double ThetaSel = ((*Node)->TwistAngle > ThetaThresh)
+					? (((*Node)->TwistAngle - ThetaThresh) / ThetaRef) : 0.0;
 				if (ThetaSel > 3.0) ThetaSel = 3.0;
 				int64_t NewStrength = int64_t(double((*Node)->Strength0)
 					* (1.0 - DegSigD * ThetaSel * (1.0 - exp(-double(Cycle) / DegSigN))));
