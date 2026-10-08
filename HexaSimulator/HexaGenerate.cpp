@@ -182,6 +182,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		auto& Node = Nodes[1];
 		Node->OffsetAngle = 0;
 		Node->OffsetDamageFactor = 0;
+		Node->TwistAngle = OffsetB > 0 ? OffsetB : 0; // r=0 → θ=b
 		Node->Strength = int64_t(FiberStrength(Seed));
 		Node->MinStress = 0;
 		Node->MaxStress = Node->Strength;
@@ -207,6 +208,9 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		NodeNow->MinStress = 0;
 		NodeNow->MaxStress = NodeNow->Strength;
 		NodeNow->SlidingStrength = SlidingStrength0;
+		// Twist angle: θ = OffsetK * r/d0 + OffsetB (thesis Eq 2-2)
+		NodeNow->TwistAngle = OffsetK * NodeNow->r / (2.0 * R0) + OffsetB;
+		if (NodeNow->TwistAngle < 0.0) NodeNow->TwistAngle = 0.0;
 		if (!NodeNow->OverBoarder)
 		{
 			Capablity[Slice] += NodeNow->MaxStress;
@@ -270,6 +274,8 @@ Node_t::Node_t()
 	this->NeighborCount = 0;
 	this->LoadFactor = 1;
 
+	this->TwistAngle = 0.0;
+
 	this->Broken = false;
 
 	this->OverBoarder = false;
@@ -291,6 +297,8 @@ void Hexa_t::ParametersCopying(HexaInit_t Init)
 	DegTauN = Init.DegTauN; DegTauD = Init.DegTauD;
 	DegSigN = Init.DegSigN; DegSigD = Init.DegSigD;
 	DegT = Init.DegT;
+	OffsetK = Init.OffsetK;
+	OffsetB = Init.OffsetB;
 
 	//printf("Hexa:FiberStrength:%.2lfMPa,Scatter:%.2lf\n", SigmaL * EM6, mf);
 }
@@ -350,4 +358,6 @@ Hexa_t::Hexa_t(HexaInit_t Init)
 	this->YLower = (2 * (YLayer / 2 - 1 + YLayer % 2) + 1) * R1 + 10 * EM6;
 
 	this->HexaGenerateP(); //RAII
+	printf("DEBUG Hexa: LayerMax=%u, TotalFibers=%u, R1=%.1fum, Vf=%.2f, R0=%.0fum, SpecR=%.0fum\n",
+		LayerMax, NodeCount[0], R1*1e6, Vf, R0*1e6, SpecimenRadious*1e6);
 }

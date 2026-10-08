@@ -52,6 +52,8 @@ public:
 
 	double x, y, r, theta;
 
+	double TwistAngle; // fiber twist angle in degrees, from FEM/geometry
+
 	bool Broken;
 
 	bool OverBoarder;
@@ -80,6 +82,7 @@ public:
 	unsigned int OrientDistributionModel;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 	double SmallCrackCB;
+	double OffsetK, OffsetB;
 };
 class Hexa_t
 {
@@ -113,6 +116,7 @@ private:
 	double R0, R1, SpecimenRadious;
 	double Vf;
 	double mf, SigmaL;
+	double OffsetK, OffsetB;
 	double SlidingStrength0;
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 	unsigned int CrackShape;

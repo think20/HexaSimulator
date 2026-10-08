@@ -452,6 +452,19 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 			(*Node)->Load = int64_t(sigma_f_intact);
 		}
 
+		// Fiber twist: axial load projection = cos(theta)
+		// 3D FEM (19-fiber RVE, 2026): fiber axial stress follows cos(theta) exactly
+		// Old linear model (1.5%/deg) deprecated — likely degrees/radians confusion
+		// → only apply in INTACT zone (Dis > 0), not in wake
+		double TwistAngle = (*Node)->TwistAngle;
+		if (TwistAngle > 0.0 && Dis > 0.0)
+		{
+			double TwistRad = TwistAngle * 3.14159265358979323846 / 180.0;
+			double TwistFactor = cos(TwistRad);
+			if (TwistFactor < 0.5) TwistFactor = 0.5; // safety floor
+			(*Node)->Load = int64_t(double((*Node)->Load) * TwistFactor);
+		}
+
 		// Crack-tip SCF: amplifies fiber stress in the crack WAKE near the front
 		// Wake fibers near crack front experience highest bridging stress
 		if (TipSCF > 1.0 && tip_zone > 0.0 && Dis < 0.0 && Dis > -tip_zone)
@@ -649,8 +662,8 @@ bool TestPiece_t::LLSFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsign
 		Slice->BFSSeq->Clear();
 		Slice->Color++;
 
-		// Matrix plasticity absorbs (1-LLSEfficiency) of the excess load
-		Slice->LoadtoTransfer[Bench] = uint64_t(double(Slice->LoadtoTransfer[Bench]) * LLSEfficiency);
+		// Matrix plasticity absorbs (1-LLSEff) of the excess load
+		Slice->LoadtoTransfer[Bench] = uint64_t(double(Slice->LoadtoTransfer[Bench]) * LLSEff);
 		if (Slice->LoadtoTransfer[Bench] == 0) { Slice->AnsSeq->Clear(); continue; }
 
 		double LLSShare = 0;
@@ -880,28 +893,19 @@ FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double 
 			{
 				auto NewPlanePos = new PlanePos_t((*Node)->x / (2 * TestPiece->R0), (*Node)->y / (2 * TestPiece->R0));
 				Fractures[s]->Push(NewPlanePos);
-				//printf("FailureReport:Broken!\n");
 			}
 		}
 		auto& Slice = TestPiece->Slice[s];
-		if (Slice->Crack != nullptr)
-		{
-			//printf("FailureReport:Slice %u a %.2lf\n", s, Slice->Crack->Len()*E6);
-		}
+		if (Slice->Crack != nullptr) { }
 		else if (Slice->SideCrack != nullptr)
 		{
 			PlanePos_t** Pos = new PlanePos_t* [3];
-
 			Slice->SideCrack->Front(Pos);
-
 			CrackFronts[s]->Push(Pos[0]);
 			CrackFronts[s]->Push(Pos[1]);
 			CrackFronts[s]->Push(Pos[2]);
-
-			//push
 		}
 		else if (Slice->RectSideCrack != nullptr);
-
 	}
 }
 FailureReport_t::FailureReport_t(FailureReport_t& From)

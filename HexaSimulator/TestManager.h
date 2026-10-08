@@ -82,6 +82,7 @@ public:
 	double WakeC0; //characteristic crack wake length in um, Curtin 2001: 100-200
 	double TipSCF; //crack-tip fiber stress concentration factor, literature: 2-5
 	double TipZone; //crack-tip SCF zone half-width in um
+	double LLSEff; //LLS load transfer efficiency, 0.20-0.80
 };
 class TestManager_t
 {

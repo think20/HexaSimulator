@@ -49,7 +49,8 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->LoadSharingModel = NowTest->LoadSharingModel;
 
 	NowInit->Vf = NowComposite->Vf;
-	//OffsetK and B not simulated yet;
+	NowInit->OffsetK = NowComposite->OffsetK;
+	NowInit->OffsetB = NowComposite->OffsetB;
 	NowInit->SpecimenRadious = NowComposite->SpecimenRadious;
 	NowInit->Rect = NowComposite->Rect;
 	NowInit->X0 = NowComposite->X0;
@@ -64,6 +65,7 @@ void TestManager_t::AssembleTestPiece(unsigned int TestID)
 	NowInit->WakeC0 = NowTest->WakeC0;
 	NowInit->TipSCF = NowTest->TipSCF;
 	NowInit->TipZone = NowTest->TipZone;
+	NowInit->LLSEff = NowTest->LLSEff;
 
 	NowInit->LoadStepMax = NowSpectra->LoadStepMax;
 	NowInit->LoadPercent = new unsigned int[NowInit->LoadStepMax];
@@ -149,7 +151,7 @@ void TestManager_t::InputManager_t::GetFibers()
 		TestManager->Fiber[Offset] = new Fiber_t;
 		auto& NewFiber = TestManager->Fiber[Offset];
 		NewFiber->FiberName = new char[MaxNameLen];
-		memset(NewFiber->FiberName, 0, sizeof NewFiber->FiberName);
+		memset(NewFiber->FiberName, 0, MaxNameLen);
 
 
 		unsigned int StartPos = 0;
@@ -183,7 +185,7 @@ void TestManager_t::InputManager_t::GetMatrixs()
 		TestManager->Matrix[Offset] = new Matrix_t;
 		auto& NewMatrix = TestManager->Matrix[Offset];
 		NewMatrix->MatrixName = new char[MaxNameLen];
-		memset(NewMatrix->MatrixName, 0, sizeof NewMatrix->MatrixName);
+		memset(NewMatrix->MatrixName, 0, MaxNameLen);
 
 		unsigned int StartPos = 0;
 		GetIDandName(RawData[Record], NewMatrix->ID, NewMatrix->MatrixName, StartPos);
@@ -223,7 +225,7 @@ void TestManager_t::InputManager_t::GetComposites()
 		TestManager->Composite[Offset] = new Composite_t;
 		auto& NewComposite = TestManager->Composite[Offset];
 		NewComposite->CompositeName = new char[MaxNameLen];
-		memset(NewComposite->CompositeName, 0, sizeof NewComposite->CompositeName);
+		memset(NewComposite->CompositeName, 0, MaxNameLen);
 
 		unsigned int StartPos = 0;
 		GetIDandName(RawData[Record], NewComposite->ID, NewComposite->CompositeName, StartPos);
@@ -292,15 +294,15 @@ void TestManager_t::InputManager_t::GetTests()
 		TestManager->Test[Offset] = new Test_t;
 		auto& NewTest = TestManager->Test[Offset];
 		NewTest->TestName = new char[MaxNameLen];
-		memset(NewTest->TestName, 0, sizeof NewTest->TestName);
+		memset(NewTest->TestName, 0, MaxNameLen);
 
 		unsigned int StartPos = 0;
 		GetIDandName(RawData[Record], NewTest->ID, NewTest->TestName, StartPos);
 		auto HeadlessData = &(RawData[Record][StartPos]);
 
 		NewTest->LoadSharingModel = 0; //default LLS for backward compatibility
-		NewTest->WakeC0 = 150.0; NewTest->TipSCF = 1.0; NewTest->TipZone = 0.0;
-		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u,%u,%lf,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel,&NewTest->LoadSharingModel,&NewTest->WakeC0,&NewTest->TipSCF,&NewTest->TipZone);
+		NewTest->WakeC0 = 150.0; NewTest->TipSCF = 1.0; NewTest->TipZone = 0.0; NewTest->LLSEff = 0.30;
+		sscanf(HeadlessData, "%u,%u,%lf,%u,%lf,%lf,%lf,%lf,%lf,%lf,%u,%u,%lf,%lf,%lf,%lf", &NewTest->CompositeID, &NewTest->SpectraID, &NewTest->MaxLoad, &NewTest->DesiredLife,&NewTest->ICLCentral,&NewTest->ICLSide,&NewTest->ICLRect,&NewTest->L,&NewTest->MaxLoadRatio,&NewTest->FiberOverloadFactor,&NewTest->OrientDistributionModel,&NewTest->LoadSharingModel,&NewTest->WakeC0,&NewTest->TipSCF,&NewTest->TipZone,&NewTest->LLSEff);
 		NewTest->MaxLoad *= E6;
 		NewTest->ICLCentral *= EM6;
 		NewTest->ICLSide *= EM6;
@@ -424,12 +426,12 @@ void TestManager_t::OutputManager_t::SaveFractures()
 		auto& Report = (TestManager->Report[t+TestManager->TestCount]);
 
 		auto Count = 0;
-		for (unsigned int s = 0 + 1; s < SlicesMax; s++)
+		for (unsigned int s = 0; s < SlicesMax; s++)
 			Count += Report->Fractures[s]->DebugGetSize();
 		fprintf(FracturesOut, "%u,\n", Count);
 
 		//Discard First Layer
-		for (unsigned int s = 0 + 1; s < SlicesMax; s++)
+		for (unsigned int s = 0; s < SlicesMax; s++)
 		{
 			//fprintf(FracturesOut, "Slice %d:,\nCrack fronts:,\n", s);
 			auto& CrackFront = Report->CrackFronts[s];
@@ -461,7 +463,7 @@ TestManager_t::InputManager_t::InputManager_t(TestManager_t* TestManager)
 	for (unsigned int r = 0; r < MaxRecordCount; r++)
 	{
 		RawData[r] = new char[MaxRecordLen];
-		memset(RawData[r], 0, sizeof RawData[r]);
+		memset(RawData[r], 0, MaxRecordLen);
 	}
 
 	printf("Input from %s\n", (DirS + TestDataS).c_str());

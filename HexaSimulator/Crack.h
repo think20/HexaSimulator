@@ -91,6 +91,7 @@ constexpr double bPara[bTerm] = { 0.906,-1.23,0.599,12,-11.2 };
 constexpr double cPara[cTerm] = { 1.12,-2.61,7.34,1.41,-4.28 };
 constexpr double dbFactor = 1.6;
 constexpr double dcFactor = 1;
+constexpr double BridgingBeta = 0.00; //fiber bridging disabled for now
 
 class SideCrackInit_t
 {

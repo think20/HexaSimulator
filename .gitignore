@@ -361,3 +361,15 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# --- HexaSimulator working files (added 2026-10-08) ---
+*.exe
+*.pdb
+*.ilk
+*.obj
+*.odb
+*.sim
+*_backup_*.csv
+*_pre_rerun_*.csv
+*_rerun*.csv
+_work.csv
+sim_output.txt

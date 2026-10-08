@@ -135,6 +135,15 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	double DeltaKb = Kb - Kb0;
 	double DeltaKc = Kc - Kc0;
 
+	// Fiber bridging correction (Niu/Liu/Sun model): bridging stress
+	// increases with crack area, reducing effective ΔK at crack tip
+	// Quadratic form: negligible at small cracks, dominant at large cracks
+	double ratio = b / D;
+	double BridgeFactor = 1.0 - BridgingBeta * ratio * ratio;
+	if (BridgeFactor < 0.10) BridgeFactor = 0.10;
+	DeltaKb *= BridgeFactor;
+	DeltaKc *= BridgeFactor;
+
 	double Cb = Cm[0];
 	double Cc = Cm[0];
 

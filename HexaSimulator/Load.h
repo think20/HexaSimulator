@@ -9,7 +9,7 @@
 // No artificial iteration limit — convergence is physically determined
 constexpr unsigned int LLSIMax = 1;
 constexpr double LLSFactor[LLSIMax + 1] = { 0, 1 };
-constexpr double LLSEfficiency = 0.60; //fraction of excess load transferred to neighbors; rest absorbed by matrix plasticity
+// LLSEfficiency now per-test from CSV (TestPiece_t::LLSEff)
 constexpr unsigned int LLSNeighborMax = ((2 - 1) + (LLSIMax)) * (LLSIMax) / 2 * 6;
 
 class LLSNode_t
@@ -85,6 +85,8 @@ public:
 	double SmallCrackCB;
 	double WakeC0;
 	double TipSCF, TipZone;
+	double OffsetK, OffsetB;
+	double LLSEff;
 };
 
 class TestPiece_t
@@ -164,6 +166,7 @@ private:
 	double DegTauN, DegTauD, DegSigN, DegSigD, DegT;
 	double WakeC0;
 	double TipSCF, TipZone;
+	double LLSEff;
 
 	HexaInit_t* HexaInit;
 

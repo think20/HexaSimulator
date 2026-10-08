@@ -37,6 +37,7 @@ void TestPiece_t::ParametersCopying(TestPieceInit_t Init)
 	WakeC0 = Init.WakeC0;
 	TipSCF = Init.TipSCF;
 	TipZone = Init.TipZone;
+	LLSEff = Init.LLSEff;
 }
 void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 {
@@ -78,6 +79,8 @@ void TestPiece_t::HexaInitReady(TestPieceInit_t Init)
 	HexaInit->DegSigN = Init.DegSigN; HexaInit->DegSigD = Init.DegSigD;
 	HexaInit->DegT = Init.DegT;
 	HexaInit->SmallCrackCB = Init.SmallCrackCB;
+	HexaInit->OffsetK = Init.OffsetK;
+	HexaInit->OffsetB = Init.OffsetB;
 }
 Slice_t::Slice_t(Hexa_t* Hexa, unsigned int Slice)
 {
