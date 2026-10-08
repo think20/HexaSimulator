@@ -184,6 +184,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		Node->OffsetDamageFactor = 0;
 		Node->TwistAngle = OffsetB > 0 ? OffsetB : 0; // r=0 → θ=b
 		Node->Strength = int64_t(FiberStrength(Seed));
+		Node->Strength0 = Node->Strength;
 		Node->MinStress = 0;
 		Node->MaxStress = Node->Strength;
 		Node->SlidingStrength = SlidingStrength0;
@@ -203,6 +204,7 @@ void Hexa_t::InitStrength(unsigned int Slice,unsigned int Layer)
 		Convert23(Layer, Order, Edge, Node);
 
 		NodeNow->Strength = int64_t(FiberStrength(Seed));
+		NodeNow->Strength0 = NodeNow->Strength;
 
 		
 		NodeNow->MinStress = 0;

@@ -54,6 +54,8 @@ public:
 
 	double TwistAngle; // fiber twist angle in degrees, from FEM/geometry
 
+	int64_t Strength0; // pristine strength: degradation must be applied to this, never to the running value
+
 	bool Broken;
 
 	bool OverBoarder;

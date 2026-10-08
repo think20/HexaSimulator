@@ -197,7 +197,7 @@ void TestPiece_t::UpdateDegradation(unsigned int Cycle)
 
 			if (DegSigN > 0)
 			{
-				int64_t NewStrength = int64_t(double((*Node)->Strength) * SigFactor / 1.0);
+				int64_t NewStrength = int64_t(double((*Node)->Strength0) * SigFactor); // FIX: from the pristine strength (was compounding every 100 cycles)
 				if (NewStrength < (*Node)->Strength)
 				{
 					(*Node)->Strength = NewStrength;
