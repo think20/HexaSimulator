@@ -456,11 +456,17 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 		// 3D FEM (19-fiber RVE, 2026): fiber axial stress follows cos(theta) exactly
 		// Old linear model (1.5%/deg) deprecated — likely degrees/radians confusion
 		// → only apply in INTACT zone (Dis > 0), not in wake
+		// twist correction model (2026-10-08):
+		//   0 = legacy cos(theta)   - 3D RVE with a TILTED LOAD and axial fibres
+		//   1 = cos^3.3(theta)      - new 19-fibre PBC off-axis cell, vf=0.45 (=F2)
+		constexpr int    TwistModel = 0;
+		constexpr double TwistExp   = 3.3;
+
 		double TwistAngle = (*Node)->TwistAngle;
 		if (TwistAngle > 0.0 && Dis > 0.0)
 		{
 			double TwistRad = TwistAngle * 3.14159265358979323846 / 180.0;
-			double TwistFactor = cos(TwistRad);
+			double TwistFactor = (TwistModel == 0) ? cos(TwistRad) : pow(cos(TwistRad), TwistExp);
 			if (TwistFactor < 0.5) TwistFactor = 0.5; // safety floor
 			(*Node)->Load = int64_t(double((*Node)->Load) * TwistFactor);
 		}
