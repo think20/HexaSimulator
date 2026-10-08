@@ -65,7 +65,8 @@
 
 int main()
 {
-	auto TestManager = new TestManager_t;
+	setvbuf(stdout, NULL, _IONBF, 0); // DEBUGOUT: unbuffered so output survives a crash
+auto TestManager = new TestManager_t;
 	TestManager->CreateTests();
 	TestManager->StartTests();
 	TestManager->SaveResults();
