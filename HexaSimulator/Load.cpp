@@ -474,7 +474,7 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 		// twist correction model (2026-10-08):
 		//   0 = legacy cos(theta)   - 3D RVE with a TILTED LOAD and axial fibres
 		//   1 = cos^3.3(theta)      - new 19-fibre PBC off-axis cell, vf=0.45 (=F2)
-		constexpr int    TwistModel = 0;
+		constexpr int    TwistModel = 1;
 		constexpr double TwistExp   = 3.3;
 
 		double TwistAngle = (*Node)->TwistAngle;
