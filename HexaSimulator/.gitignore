@@ -6,3 +6,4 @@ RemainingFractures*.csv
 R*_0.*.csv
 F1_0.*.csv
 FF[23]_*.csv
+!REPRO/**
