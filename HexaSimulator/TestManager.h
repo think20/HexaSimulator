@@ -16,7 +16,7 @@ constexpr unsigned int MaxRecordLen = 256;
 constexpr unsigned int MaxNameLen = 32;
 
 //For PC
-constexpr char Dir[] = "C:\\Users\\12155\\Source\\repos\\think20\\HexaSimulator\\HexaSimulator\\";
+constexpr char Dir[] = ""; // relative to the working directory
 
 //For Laptop
 //constexpr char Dir[] = "C:\\Users\\12155\\source\\repos\\HexaSimulator\\HexaSimulator\\";
