@@ -27,7 +27,13 @@ constexpr unsigned int FixedOrient = 20;
 constexpr unsigned int FanShapeOrient = 21;
 constexpr unsigned int RandomOrient = 22;
 
-constexpr unsigned int MaxCycle = 500'0000;
+constexpr unsigned int MaxCycle = 20'000'000;
+
+// 1 = 对照组：仅保留 K_IC 判据，屏蔽 MCL 与 MLR
+// 模型只保留 MLR + K_IC 两条失效通道；最大裂纹长度判据（b/D=0.5）已取消
+#ifndef KIC_ONLY
+#define KIC_ONLY 0
+#endif
 constexpr char Version[] = "20251126v1";
 
 // Reaction Layer damage and following fiber damage should be added, 1400MPa

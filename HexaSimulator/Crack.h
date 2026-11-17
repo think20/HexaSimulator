@@ -113,6 +113,10 @@ public:
 	double Len();
 	void Front(PlanePos_t**);
 	double S;
+	bool KicHit = false;   // true if the K_IC criterion triggered inside UpdateCrack
+	double GetKb() { return Kb; }
+	double GetKc() { return Kc; }
+	double GetD() { return D; }
 	double MaxCrackLen;
 private:
 	void ParametersCopying(SideCrackInit_t Init);

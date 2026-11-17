@@ -27,8 +27,13 @@ FailureReport_t TestPiece_t::FiberLoadP(unsigned int CycleMax)
 	while (this->SyncTotalStep < TotalStepMax)
 	{
 		auto Cycle = SyncTotalStep %(100* LoadStepMax);
-		//if (Cycle == 0) 
-			//printf("TestPiece:Cycle%d\n", SyncTotalStep/LoadStepMax);
+		// Optional progress trace (compile with -DVERBOSE_TRACE to enable)
+#ifdef VERBOSE_TRACE
+		if (Cycle == 0)
+		{
+			printf("SYNC|cyc=%u|step=%u|t=%.1f\n", SyncTotalStep / LoadStepMax, SyncTotalStep % LoadStepMax, double(clock()) / CLOCKS_PER_SEC);
+			fflush(stdout);
+		}
 
 		LoadStep = SyncTotalStep % LoadStepMax;
 		LoadCycle = SyncTotalStep / LoadStepMax;
@@ -160,7 +165,18 @@ void TestPiece_t::LoadRedistribute(Slice_t* Slice, unsigned int LoadStep, unsign
 	}
 	else //LLS default
 	{
-		while (LLSFiberOverload(Slice, LoadStep, LoadCycle) == true);
+		// [DIAG] Bound the cascade; report non-convergent slices instead of hanging
+		unsigned int Iters = 0;
+		constexpr unsigned int MaxLLSIterations = 2000;
+		while (LLSFiberOverload(Slice, LoadStep, LoadCycle) == true)
+		{
+			if (++Iters >= MaxLLSIterations)
+			{
+				printf("LLS-NOCONV|Slice=%u|Cy=%u|St=%u|Iters=%u\n", Slice->Slice, LoadCycle, LoadStep, Iters);
+				fflush(stdout);
+				break;
+			}
+		}
 	}
 }
 void TestPiece_t::UpdateDegradation(unsigned int Cycle)
@@ -206,7 +222,7 @@ void TestPiece_t::UpdateDegradation(unsigned int Cycle)
 				// the ratcheting damage grows. ThetaThresh is itself a scan-able quantity: 7 deg
 				// is the angle at which the measured breakpoint count surges, but the effective
 				// onset used by the model need not be exactly that value.
-				constexpr double ThetaThresh = 7.0;   // deg
+				constexpr double ThetaThresh = 7.0;   // deg   // deg
 				constexpr double ThetaRef    = 4.8;   // deg: gives ThetaSel = 1 at F3's outermost fibre (11.8 deg)
 				double ThetaSel = ((*Node)->TwistAngle > ThetaThresh)
 					? (((*Node)->TwistAngle - ThetaThresh) / ThetaRef) : 0.0;
@@ -303,7 +319,7 @@ void TestPiece_t::CrackPlaneLoadDistribute(Slice_t* Slice, unsigned int LoadStep
 	if (CrackLen > Crack->MaxCrackLen)
 	{
 		printf("FAIL|Crack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, Crack->MaxCrackLen*E6);
-		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 1);
 	}
 	if (Crack->Yield)
 	{
@@ -366,7 +382,7 @@ void TestPiece_t::RectSideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int 
 	if (CrackLen > RectSideCrack->MaxCrackLen)
 	{
 		printf("FAIL|RectSideCrack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, RectSideCrack->MaxCrackLen*E6);
-		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 2);
 	}
 	if (RectSideCrack->Yield)
 	{
@@ -407,12 +423,18 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 
 	// Crack growth
 	double CrackLen = SideCrack->UpdateCrack(double(CompositeLoad) * MatrixLoadFactor);
-	if (CrackLen > SideCrack->MaxCrackLen)
+	if (LoadCycle % 500 == 0 && LoadCycle > 0) printf("CRACK|Cy=%u|b=%.1f um|b/D=%.4f|Kb=%.2f|Max=%.1f|Kic=%d\n", LoadCycle, CrackLen*E6, CrackLen/SideCrack->GetD(), SideCrack->GetKb(), SideCrack->MaxCrackLen*E6, (int)SideCrack->KicHit);
+	// K_IC 已触发 → 直接以 Mode 6 终止（对照模式下这是唯一通道）
+	if (SideCrack->KicHit)
 	{
-		printf("FAIL|SideCrack_MaxCrackLen|Sl=%u|Cy=%u|St=%u|Len=%.1f|Max=%.1f\n", Slice->Slice, LoadCycle, LoadStep, CrackLen*E6, SideCrack->MaxCrackLen*E6);
-		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		printf("FAIL|KIC|Sl=%u|Cy=%u|b=%.1f um|b/D=%.4f|Kb=%.2f|KIC=70|D=%.1f um\n", Slice->Slice, LoadCycle, CrackLen*E6, CrackLen/SideCrack->GetD(), SideCrack->GetKb(), SideCrack->GetD()*E6);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 6u);
 	}
-
+	if (KIC_ONLY == 0 && CrackLen > SideCrack->MaxCrackLen)
+	{
+		printf("FAIL|MCL|Sl=%u|Cy=%u|b=%.1f um|b/D=%.4f|Max=%.1f|Kb=%.2f|KIC=70|D=%.1f um\n", Slice->Slice, LoadCycle, CrackLen*E6, CrackLen/SideCrack->GetD(), SideCrack->MaxCrackLen*E6, SideCrack->GetKb(), SideCrack->GetD()*E6);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 3u);
+	}
 	// Characteristic crack length c0 (Curtin 2001, thesis Eq 9: 100-200um)
 	double c0 = WakeC0 * EM6;
 
@@ -490,7 +512,7 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 		// Wake fibers near crack front experience highest bridging stress
 		if (TipSCF > 1.0 && tip_zone > 0.0 && Dis < 0.0 && Dis > -tip_zone)
 		{
-			double decay = 1.0 - Dis / tip_zone; // 1 at crack front, 0 at zone edge
+			double decay = 1.0 + Dis / tip_zone; // 1 at crack front, 0 at zone edge (Dis<0 in wake)
 			double scf = 1.0 + (TipSCF - 1.0) * decay;
 			(*Node)->Load = int64_t(double((*Node)->Load) * scf);
 		}
@@ -505,7 +527,7 @@ void TestPiece_t::SideCrackPlaneLoadDistribute(Slice_t* Slice, unsigned int Load
 	{
 		double CrackLen = Slice->SideCrack->Len();
 		printf("FAIL|SideCrack_LoadRatio|Sl=%u|Cy=%u|St=%u|Ratio=%.4f|MaxLR=%.2f|Cap=%lld|Load=%lld|CrackLen=%.1f\n", Slice->Slice, LoadCycle, LoadStep, LoadRatio, MaxLoadRatio, Slice->Capablity, TotalFiberLoad, CrackLen*E6);
-		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 4);
 	}
 }
 void TestPiece_t::NonCrackLoadDistribute(Slice_t* Slice, unsigned int LoadStep, unsigned int LoadCycle)
@@ -727,7 +749,7 @@ void TestPiece_t::SliceFiberOverload(Slice_t* Slice, unsigned int LoadStep, unsi
 		if (Slice->RectSideCrack != nullptr) CrackLen = Slice->RectSideCrack->Len();
 		if (Slice->SideCrack != nullptr) CrackLen = Slice->SideCrack->Len();
 
-		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this);
+		throw FailureReport_t(Slice->Slice, LoadCycle, CrackLen, this, 5);
 	}
 }
 double TestPiece_t::FindFiberLoadBaseline(Slice_t* Slice)
@@ -891,10 +913,11 @@ double TestPiece_t::FindFiberLoadBaselineWithSideCrack(Slice_t* Slice)
 	double BaseLine = double(Slice->NodeCount) / TotalFactor;
 	return BaseLine;
 }
-FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double CrackLen, TestPiece_t* TestPiece)
+FailureReport_t::FailureReport_t(unsigned int Slice, unsigned int Cycle, double CrackLen, TestPiece_t* TestPiece, unsigned int Mode)
 {
 	this->Slice = Slice;
 	this->Cycle = Cycle;
+	this->Mode = Mode;
 	this->CrackLen = CrackLen;
 
 	Fractures = new TQueue_t<PlanePos_t*>* [SlicesMax];
@@ -933,6 +956,7 @@ FailureReport_t::FailureReport_t(FailureReport_t& From)
 {
 	this->Slice = From.Slice;
 	this->Cycle = From.Cycle;
+	this->Mode = From.Mode;
 	this->CrackLen = From.CrackLen;
 
 	Fractures = new TQueue_t<PlanePos_t*>*[SlicesMax];

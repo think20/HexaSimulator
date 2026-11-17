@@ -128,8 +128,13 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	if (Kb > KIC || Kc > KIC)
 	{
 		printf("FAIL|SideCrack_KIC|b=%.1f|c=%.1f|Kb=%.1f|Kc=%.1f|KIC=%.1f\n", b*E6, c*E6, Kb, Kc, KIC);
+		KicHit = true;
+#if KIC_ONLY
+		return b;   // 对照模式：仅标记，裂纹继续自然扩展
+#else
 		b = MaxCrackLen + 1 * EM6;
 		return b;
+#endif
 	}
 
 	double DeltaKb = Kb - Kb0;
@@ -170,7 +175,7 @@ double SideCrack_t::UpdateCrack(double Sigma)
 	//printf("SideCrack: b%.2lf c%.2lf\n", b * E6,c*E6);
 
 	//y=kx+b,Right half of the crack front
-	k0 = (c * c - 2 * b * R * R) / (c * R * sqrt(4 - c * c / (R * R)));
+	k0 = (c * c - 2 * b * R) / (c * R * sqrt(4 - c * c / (R * R)));
 	b0 = b - R;
 
 	//Area of Cracked Composite

@@ -18,7 +18,9 @@ void Hexa_t::HexaGenerateP()
 		t[i].detach();
 	}
 
+	printf("[HEXA] before cv.wait Finish=%u\n", this->Finish); fflush(stdout);
 	cv.wait(lock, [&]{ return this->Finish == ThreadMax; });
+	printf("[HEXA] after cv.wait Finish=%u\n", this->Finish); fflush(stdout);
 
 	//for (unsigned int s = 0; s < SlicesMax; s++)
 		//printf("Hexa:Generated Slice 0 with %d Nodes!\n",  this->NodeCount[0]);
@@ -28,6 +30,7 @@ void Hexa_t::HexasGenerate(unsigned int s0)
 {
 	for (unsigned int s = 0; s < StackPerThread; s++)
 	{
+		printf("[HEXA] gen slice=%u\n", s0 + s); fflush(stdout);
 		HexaGenerate(s0 + s);
 		//printf("%d:%d\n", s, NodeCount[s]);
 	}
@@ -47,6 +50,9 @@ void Hexa_t::HexaGenerate(unsigned int Slice)
 }
 void Hexa_t::GenerateLayer(unsigned int Slice, unsigned int Layer)
 {
+	static unsigned int DbgCounter = 0;
+	if ((++DbgCounter % 23) == 0) { printf("[HEXA] GenerateLayer slice=%u layer=%u cnt=%u\n", Slice, Layer, DbgCounter); fflush(stdout); }
+
 	//printf("Layer:%u\n", Layer);
 	//auto TimeSeed = std::chrono::high_resolution_clock::now();
 	//std::default_random_engine Seed(TimeSeed);

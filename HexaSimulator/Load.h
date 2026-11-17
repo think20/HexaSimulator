@@ -178,10 +178,11 @@ private:
 class FailureReport_t
 {
 public:
-	FailureReport_t(unsigned int, unsigned int, double, TestPiece_t*);
+	FailureReport_t(unsigned int, unsigned int, double, TestPiece_t*, unsigned int Mode = 0);
 	FailureReport_t(FailureReport_t& From);
 	~FailureReport_t();
 	unsigned int Slice, Cycle;
+	unsigned int Mode;   // 1=CrackMaxLen 2=RectSideCrackMaxLen 3=SideCrackMaxLen 4=LoadRatio 5=FiberOverload
 	double CrackLen;
 	TQueue_t<PlanePos_t*>** Fractures;
 	TQueue_t<PlanePos_t*>** CrackFronts;

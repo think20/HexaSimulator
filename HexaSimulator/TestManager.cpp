@@ -390,7 +390,7 @@ void TestManager_t::InputManager_t::GetNums(char* From, unsigned int* Dest, bool
 }
 void TestManager_t::OutputManager_t::SaveBasicResults()
 {
-	fprintf(FOut, "Name,PeakLoad,DesiredLife,Life_C,Life_S,Breaks_C,Breaks_S\n");
+	fprintf(FOut, "Name,PeakLoad,DesiredLife,Life_C,Life_S,Breaks_C,Breaks_S,Mode\n");
 	for (unsigned int t = 0; t < TestManager->TestCount; t++)
 	{
 		auto CountBreaks = [](FailureReport_t* R) {
@@ -402,14 +402,15 @@ void TestManager_t::OutputManager_t::SaveBasicResults()
 		};
 		auto RC = TestManager->Report[t];
 		auto RS = TestManager->Report[t + TestManager->TestCount];
-		fprintf(FOut, "%s,%.0lf,%u,%u,%u,%u,%u\n",
+		fprintf(FOut, "%s,%.0lf,%u,%u,%u,%u,%u,%u\n",
 			TestManager->Test[t]->TestName,
 			TestManager->Test[t]->MaxLoad * EM6,
 			TestManager->Test[t]->DesiredLife,
 			RC ? RC->Cycle : 0,
 			RS ? RS->Cycle : 0,
 			CountBreaks(RC),
-			CountBreaks(RS));
+			CountBreaks(RS),
+			RS ? RS->Mode : 0);
 	}
 	fclose(FOut);
 }
